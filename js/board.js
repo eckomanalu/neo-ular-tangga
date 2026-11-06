@@ -1,10 +1,10 @@
 /* ===== Board, snakes, ladders (drawn and animated every frame) ===== */
-const M=18,TK=192;
+const M=6,TK=192;
 let WW=720,WH=720,Sx=68.4,Sy=68.4,VW=720,VH=720,ZIN=2,ZOUT=1,AR=1;
 /* Board shape: tall tiles (ratio 0.7) in portrait, square in landscape. Re-run before each new game. */
 function setDims(){
   const land=window.innerWidth>window.innerHeight;
-  AR=land?1:0.7;
+  AR=land?1:0.711;
   const box=land?Math.min(window.innerHeight-16,window.innerWidth-360):Math.min(900,window.innerWidth-32);
   VW=Math.round(Math.max(720,Math.min(land?1080:960,box*Math.min(window.devicePixelRatio||1,2.5)))/10)*10;
   WW=720;WH=Math.round(WW/AR);VH=Math.round(VW/AR);
@@ -15,8 +15,7 @@ setDims();
 const LADDERS={4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
 const SNAKES={16:6,47:26,49:11,62:19,87:24,93:73,95:75,98:78};
 const GIFTS=[12,25,33,45,58,66,77,89];
-const SCOL=[['#2ec4a6','#1b8f7a'],['#ff5d73','#c93a52'],['#ffb703','#d98e00'],['#8e7dff','#5f4fd1'],
-  ['#7bd94a','#4ea022'],['#ff8fab','#d95f84'],['#4cc9f0','#2793b8'],['#f78c4b','#c7611f']];
+const SCOL=[['#4cc24f','#2f9a35'],['#62d35c','#3aa83f'],['#3fb860','#278c45'],['#7bd650','#4aa332']];
 const PW={dbl:'Dobel Giliran',ss:'Anti-Ular',ts:'Anti-Tembak'};
 const G={scene:null,players:[],cur:0,session:0,over:false};
 const hx=s=>parseInt(s.slice(1),16);
@@ -40,20 +39,31 @@ class BoardScene extends Phaser.Scene{
   }
   drawBoard(){
     const g=this.add.graphics().setDepth(0);
-    g.fillStyle(0x4a2f17,1);g.fillRect(0,0,WW,WH);
-    g.fillStyle(0x6b4423,1);g.fillRoundedRect(4,4,WW-8,WH-8,16);
-    g.fillStyle(0x8a5a2b,1);g.fillRoundedRect(10,10,WW-20,WH-20,10);
-    const st={fontFamily:'"Lilita One","Trebuchet MS",sans-serif',fontSize:'23px',color:'#8a6330',resolution:4};
+    g.fillStyle(0xf4b90b,1);g.fillRect(0,0,WW,WH);
+    const st={fontFamily:'"Lilita One","Trebuchet MS",sans-serif',fontSize:'22px',color:'#d0467a',resolution:4};
     for(let n=1;n<=100;n++){
       const c=cell(n),x0=c.x-Sx/2,y0=c.y-Sy/2;
-      let col=(c.row+c.col)%2?0xfff1c9:0xffdf9e;
-      if(LADDERS[n])col=0xcdeebb;else if(SNAKES[n])col=0xffc9c9;else if(n===1)col=0xbfe3ff;else if(n===100)col=0xffe58f;
-      g.fillStyle(col,1);g.fillRect(x0+.5,y0+.5,Sx-1,Sy-1);
-      this.add.text(x0+4,y0+2,String(n),st).setDepth(1);
+      g.fillStyle((c.row+c.col)%2?0xffffff:0xffc3d6,1);g.fillRect(x0,y0,Sx,Sy);
+      /* direction chevron along the snake-like path */
+      if(n<100){
+        const up=n%10===0,dir=c.row%2?-1:1,cx=c.x,cy=c.y+Sy*0.2,w=Sx*0.16;
+        g.lineStyle(4,0xf29ab8,0.75);g.beginPath();
+        if(up){g.moveTo(cx-w,cy+w*0.5);g.lineTo(cx,cy-w*0.7);g.lineTo(cx+w,cy+w*0.5);}
+        else{g.moveTo(cx-dir*w*0.6,cy-w);g.lineTo(cx+dir*w*0.6,cy);g.lineTo(cx-dir*w*0.6,cy+w);}
+        g.strokePath();
+      }
+      this.add.text(c.x,y0+3,String(n),st).setOrigin(.5,0).setDepth(1);
     }
-    const lab={fontFamily:st.fontFamily,fontSize:'13px',color:'#3b6ea8',resolution:4};
-    const c1=cell(1);this.add.text(c1.x,c1.y+Sy/2-4,'MULAI',lab).setOrigin(.5,1).setDepth(1);
-    const c100=cell(100);lab.color='#a97500';this.add.text(c100.x,c100.y+Sy/2-4,'FINISH',lab).setOrigin(.5,1).setDepth(1);
+    const c1=cell(1),c100=cell(100);
+    /* house on cell 1 */
+    g.fillStyle(0xe8574f,1);g.fillTriangle(c1.x-17,c1.y+Sy*0.18,c1.x,c1.y-Sy*0.02,c1.x+17,c1.y+Sy*0.18);
+    g.fillStyle(0xfff0c8,1);g.fillRect(c1.x-12,c1.y+Sy*0.18,24,17);
+    g.fillStyle(0x8a5a2b,1);g.fillRect(c1.x-4,c1.y+Sy*0.18+6,8,11);
+    /* flag on cell 100 */
+    const fx=c100.x-8,fy=c100.y-Sy*0.04;
+    g.fillStyle(0x6b4423,1);g.fillRect(fx-1.5,fy-8,3,34);
+    for(let r=0;r<3;r++)for(let q=0;q<4;q++){g.fillStyle((r+q)%2?0x222222:0xffffff,1);g.fillRect(fx+1.5+q*7,fy-8+r*7,7,7);}
+    g.lineStyle(1.5,0x222222,1);g.strokeRect(fx+1.5,fy-8,28,21);
   }
   makeSL(){
     this.lad=Object.entries(LADDERS).map(([a,b])=>({a:+a,b:+b,A:cell(+a),B:cell(+b),lit:-1,pulse:0}));
@@ -103,16 +113,17 @@ class BoardScene extends Phaser.Scene{
   }
   drawLadder(g,L){
     const dx=L.B.x-L.A.x,dy=L.B.y-L.A.y,len=Math.hypot(dx,dy),nx=dx/len,ny=dy/len,px=-ny,py=nx,off=11+L.pulse*2,cnt=ladderRungs(L);
-    for(const s of[-1,1]){g.lineStyle(7,0x000000,0.2);g.lineBetween(L.A.x+px*off*s+3,L.A.y+py*off*s+5,L.B.x+px*off*s+3,L.B.y+py*off*s+5);}
-    if(L.pulse>0){for(const s of[-1,1]){g.lineStyle(15,0xffe58f,0.3*L.pulse);g.lineBetween(L.A.x+px*off*s,L.A.y+py*off*s,L.B.x+px*off*s,L.B.y+py*off*s);}}
-    for(const s of[-1,1]){
-      g.lineStyle(7,0x8b5a2b,1);g.lineBetween(L.A.x+px*off*s,L.A.y+py*off*s,L.B.x+px*off*s,L.B.y+py*off*s);
-      g.lineStyle(2.5,0xd7a066,1);g.lineBetween(L.A.x+px*(off*s-1.5),L.A.y+py*(off*s-1.5),L.B.x+px*(off*s-1.5),L.B.y+py*(off*s-1.5));
-    }
+    for(const s of[-1,1]){g.lineStyle(8,0x000000,0.18);g.lineBetween(L.A.x+px*off*s+3,L.A.y+py*off*s+5,L.B.x+px*off*s+3,L.B.y+py*off*s+5);}
+    if(L.pulse>0){for(const s of[-1,1]){g.lineStyle(16,0xffe58f,0.35*L.pulse);g.lineBetween(L.A.x+px*off*s,L.A.y+py*off*s,L.B.x+px*off*s,L.B.y+py*off*s);}}
     for(let k=1;k<=cnt;k++){
       const f=k/(cnt+1),cx=L.A.x+dx*f,cy=L.A.y+dy*f,lit=L.lit>=f;
-      g.lineStyle(6,lit?0xffd166:0xa86f35,1);g.lineBetween(cx-px*off,cy-py*off,cx+px*off,cy+py*off);
-      if(lit){g.fillStyle(0xffe9a3,0.5);g.fillCircle(cx,cy,12);}
+      g.lineStyle(8,lit?0xffb703:0x0b6e94,1);g.lineBetween(cx-px*off,cy-py*off,cx+px*off,cy+py*off);
+      g.lineStyle(4.5,lit?0xffe58f:0x8fe8ff,1);g.lineBetween(cx-px*off,cy-py*off,cx+px*off,cy+py*off);
+    }
+    for(const s of[-1,1]){
+      g.lineStyle(9,0x0b6e94,1);g.lineBetween(L.A.x+px*off*s,L.A.y+py*off*s,L.B.x+px*off*s,L.B.y+py*off*s);
+      g.lineStyle(5,0x19b5e6,1);g.lineBetween(L.A.x+px*off*s,L.A.y+py*off*s,L.B.x+px*off*s,L.B.y+py*off*s);
+      g.lineStyle(1.8,0xbff3ff,1);g.lineBetween(L.A.x+px*(off*s-1.2),L.A.y+py*(off*s-1.2),L.B.x+px*(off*s-1.2),L.B.y+py*(off*s-1.2));
     }
   }
   snakePts(sn,time){
@@ -129,7 +140,8 @@ class BoardScene extends Phaser.Scene{
     const pts=this.snakePts(sn,time),n=pts.length-1;
     g.fillStyle(0x000000,0.17);for(let i=n;i>=0;i-=2){const p=pts[i];g.fillCircle(p.x+3,p.y+5,p.r);}
     for(let i=n;i>=0;i--){const p=pts[i];g.fillStyle(hx(Math.floor(i/4)%2?sn.col[0]:sn.col[1]),1);g.fillCircle(p.x,p.y,p.r);}
-    g.fillStyle(0xffffff,0.2);for(let i=n;i>=2;i-=3){const p=pts[i];g.fillCircle(p.x-p.r*0.25,p.y-p.r*0.3,p.r*0.38);}
+    g.fillStyle(0x1d5f27,0.85);for(let i=n-1;i>=3;i-=4){const p=pts[i];g.fillCircle(p.x,p.y,p.r*0.42);}
+    g.fillStyle(0xf6e27a,0.9);for(let i=n-3;i>=4;i-=8){const p=pts[i];g.fillCircle(p.x,p.y,p.r*0.2);}
     const p0=pts[0],p1=pts[Math.min(3,n)];let ax=p0.x-p1.x,ay=p0.y-p1.y;const al=Math.hypot(ax,ay)||1;ax/=al;ay/=al;
     const bx=-ay,by=ax,r=p0.r+2,o=sn.mouth,ang=Math.atan2(ay,ax),hc={x:p0.x+ax*r*0.35,y:p0.y+ay*r*0.35};
     g.fillStyle(hx(sn.col[0]),1);g.fillPoints(ellPts(hc.x,hc.y,r*1.35,r*1.1,ang),true);

@@ -1,5 +1,5 @@
 /* ===== Art: every token icon and the gift box is drawn here in code ===== */
-const PCOL=['#ff5d73','#4cc9f0','#ffb703','#2ec4a6'];
+const PCOL=['#e53935','#8e24aa','#43a047','#fb8c00'];
 const ICONS=[{id:'horse',n:'Kuda'},{id:'cat',n:'Kucing'},{id:'dog',n:'Anjing'},{id:'rabbit',n:'Kelinci'},{id:'fish',n:'Ikan'},
   {id:'chick',n:'Ayam'},{id:'star',n:'Bintang'},{id:'heart',n:'Hati'},{id:'crown',n:'Mahkota'},{id:'rocket',n:'Roket'}];
 const INK='#14233d';
@@ -91,15 +91,16 @@ function cropPhoto(img){
   const s=Math.min(img.width,img.height);c.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,192,192);return cv;
 }
 
-/* Dice face drawn inside a player's corner panel */
+/* Dice face drawn inside a player's pink dice box */
 function drawDieFace(cv,v,ready){
   const c=cv.getContext('2d'),s=cv.width,k=s/100;
-  c.clearRect(0,0,s,s);c.save();c.scale(k,k);
+  c.clearRect(0,0,s,s);if(!v&&!ready)return;
+  c.save();c.scale(k,k);
+  c.fillStyle='#fff';c.beginPath();c.roundRect(4,4,92,92,20);c.fill();
+  c.strokeStyle='#e7a0b8';c.lineWidth=3;c.stroke();
   const P={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],
     5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]};
-  if(ready)c.globalAlpha=0.16;
-  (P[v]||[]).forEach(([x,y])=>{c.fillStyle=v===1?'#ff5d73':'#14233d';c.beginPath();c.arc(50+x*26,50+y*26,v===1?14:10,0,Math.PI*2);c.fill();});
-  c.globalAlpha=1;
-  if(ready){c.fillStyle='#14233d';c.font='800 21px Nunito,system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('LEMPAR',50,52);}
+  if(ready){c.fillStyle='#d9486f';c.font='800 22px Nunito,system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('LEMPAR',50,52);}
+  else(P[v]||[]).forEach(([x,y])=>{c.fillStyle=v===1?'#e53935':'#2a1f33';c.beginPath();c.arc(50+x*25,50+y*25,v===1?14:9.5,0,Math.PI*2);c.fill();});
   c.restore();
 }

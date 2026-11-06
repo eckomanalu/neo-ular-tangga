@@ -3,6 +3,7 @@
 const $=s=>document.querySelector(s);
 let game=null,inGame=false,lastPlayers=null;
 const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;};
+const PIN_SVG='<svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20C24 5.4 18.6 0 12 0z" fill="currentColor" stroke="#fff" stroke-width="1.5"/></svg>';
 const UI={
   _roll:null,_iv:null,_rolling:-1,paused:false,
   render(){
@@ -12,15 +13,16 @@ const UI={
       if(!p){el.className='pp empty';continue;}
       const active=G.cur===i&&!G.over,mine=active&&p.type==='human'&&!!this._roll;
       el.className='pp'+(active?' on':'');el.style.setProperty('--c',p.color);
-      const r1=mk('div','r1');r1.append(mk('span','nm',p.name),mk('span','sq','Kotak '+p.pos));
-      const r2=mk('div','r2');
-      const av=mk('img','av');av.src=p.avUrl;av.alt='';
+      const lab=mk('div','lab');lab.append(mk('span','nm',p.name),mk('span','sq','Kotak '+p.pos));
+      const wd=mk('div','wd');
+      const pin=mk('div','pin');pin.innerHTML=PIN_SVG;
+      const av=mk('img','av');av.src=p.avUrl;av.alt='';pin.appendChild(av);
       const d=mk('button','dice');d.type='button';
       const cv=document.createElement('canvas');cv.width=cv.height=120;drawDieFace(cv,p.last,mine);d.appendChild(cv);
       if(mine){d.classList.add('ready');d.setAttribute('aria-label','Lempar dadu');d.addEventListener('click',()=>UI.tapRoll());}
       else{d.disabled=true;d.tabIndex=-1;d.setAttribute('aria-label','Dadu '+p.name);}
       if(this._rolling===i)d.classList.add('rolling');
-      r2.append(av,d);
+      wd.append(pin,d,mk('span','arr'));
       const pl=mk('div','pills');
       if(p.armed)pl.appendChild(mk('span','pill d on','Dobel aktif'));
       [['dbl','d','Dobel'],['ss','s','Anti-ular'],['ts','t','Anti-tembak']].forEach(([k,c,l])=>{
@@ -30,7 +32,8 @@ const UI={
         if(use){s.type='button';s.addEventListener('click',()=>{if(!UI.paused)G.scene.armDouble(p);});}
         pl.appendChild(s);
       });
-      el.append(r1,r2);if(pl.childNodes.length)el.appendChild(pl);
+      if(pl.childNodes.length)lab.appendChild(pl);
+      el.append(lab,wd);
     }
   },
   status(t){$('#status').textContent=t;},
@@ -169,6 +172,6 @@ $('#btnToMenu').addEventListener('click',()=>{$('#end').hidden=true;inGame=false
   syncSnd();renderSetup();
   try{await Promise.race([document.fonts.load('20px "Lilita One"'),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   if(!window.Phaser){UI.status('Phaser gagal dimuat. Periksa koneksi lalu muat ulang halaman.');return;}
-  game=new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:VW,height:VH,backgroundColor:'#4a2f17',
+  game=new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:VW,height:VH,backgroundColor:'#f4b90b',
     scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},audio:{noAudio:true},scene:[BoardScene]});
 })();

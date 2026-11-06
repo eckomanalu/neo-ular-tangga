@@ -33,53 +33,65 @@ h1 span{color:var(--saffron)}
 
 .tools{display:flex;gap:6px;flex-wrap:wrap}
 
-/* ===== Game screen: the whole board stays visible, one panel per player in the four corners ===== */
+/* ===== Game screen: gold frame, red patterned ground, tall pink/white board, one widget per corner ===== */
 html,body{height:100%}
-#app{height:100%;max-width:900px;margin:0 auto;display:grid;gap:8px;align-content:center;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"fab ." "p2 p3" "board board" "p1 p4"}
+body{padding:0;background:#6d0e14;overflow:hidden}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-#stageWrap{grid-area:board;justify-self:center;position:relative;aspect-ratio:var(--ar,1);width:min(100%,calc((100dvh - 300px) * var(--ar,1)));min-width:240px;border-radius:14px;overflow:hidden;background:#4a2f17;box-shadow:0 10px 30px #0008}
+#app{--u:min(1vw,.54dvh);position:relative;width:calc(var(--u)*100);height:100dvh;margin:0 auto;overflow:hidden;
+  display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;justify-items:center;align-items:center;
+  grid-template-areas:"p2 p3" "board board" "p1 p4";
+  padding:calc(var(--u)*11) calc(var(--u)*2) calc(var(--u)*3);
+  border:calc(var(--u)*2.2) solid #f4b90b;box-shadow:inset 0 0 0 calc(var(--u)*.7) #a86e00,inset 0 0 calc(var(--u)*8) #0007;
+  background-color:#b3202a;
+  background-image:radial-gradient(circle at 25% 25%,#ffffff22 0 14%,transparent 15%),radial-gradient(circle at 75% 75%,#00000022 0 14%,transparent 15%);
+  background-size:calc(var(--u)*8) calc(var(--u)*8)}
+#stageWrap{grid-area:board;position:relative;aspect-ratio:var(--ar,1);width:calc(var(--u)*84);border-radius:calc(var(--u)*1.4);overflow:hidden;background:#f4b90b;box-shadow:0 0 0 calc(var(--u)*.7) #f4b90b,0 calc(var(--u)*1.2) calc(var(--u)*3) #0009}
 #stage{position:absolute;inset:0}
-.fab{grid-area:fab;justify-self:start;width:38px;height:38px;padding:0;border:0;border-radius:11px;background:#1f9d6b;box-shadow:0 3px 0 #136a49,0 4px 10px #0006;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
-.fab span{display:block;width:18px;height:3px;border-radius:2px;background:#fff}
+#stage canvas{display:block}
+.fab{position:absolute;z-index:6;left:calc(var(--u)*3.5);top:calc(var(--u)*3);width:calc(var(--u)*8);height:calc(var(--u)*8);padding:0;border:0;border-radius:calc(var(--u)*2);background:#27b04a;box-shadow:0 calc(var(--u)*.6) 0 #167a30,0 calc(var(--u)*1) calc(var(--u)*2) #0006;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.9);cursor:pointer}
+.fab span{display:block;width:calc(var(--u)*4.2);height:calc(var(--u)*.8);border-radius:99px;background:#fff}
 .pop{position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:12px;background:rgba(6,14,28,.72);overflow:auto}
 .pop[hidden]{display:none!important}
 .pop-card{width:min(100%,300px);max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:18px;background:var(--panel);border:2px solid var(--line);box-shadow:0 14px 40px #000a}
 .pop-card h3{margin:0;font-family:var(--f-display);font-weight:400;font-size:24px;line-height:1}
 .pop-card .tool{padding:11px 12px;font-size:14px}
 .pop-card .go{font-size:20px;padding:11px}
-#stage canvas{display:block}
 
-/* Player panels (P1 bottom-left, P2 top-left, P3 top-right, P4 bottom-right) */
-.pp{--c:#fff;width:100%;max-width:260px;min-width:0;display:flex;flex-direction:column;gap:6px;padding:7px 9px 9px;border-radius:16px;background:var(--panel);border:3px solid var(--c);transition:background .2s,box-shadow .2s}
-#pp0{grid-area:p1}#pp1{grid-area:p2}#pp2{grid-area:p3}#pp3{grid-area:p4}
-#pp0,#pp1{justify-self:start}#pp2,#pp3{justify-self:end}
+/* Player widgets: P1 bottom-left, P2 top-left, P3 top-right, P4 bottom-right */
+.pp{--c:#fff;--dir:row;--arR:#ff8a00;--arL:transparent;width:calc(var(--u)*43);min-width:0;display:flex;flex-direction:column;gap:calc(var(--u)*.8);color:#fff}
+#pp0{grid-area:p1;justify-self:start}#pp1{grid-area:p2;justify-self:start}#pp2{grid-area:p3;justify-self:end}#pp3{grid-area:p4;justify-self:end}
+#pp2,#pp3{--dir:row-reverse;--arR:transparent;--arL:#ff8a00;align-items:flex-end;text-align:right}
+#pp1,#pp2{flex-direction:column-reverse}
 .pp.empty{visibility:hidden}
-.pp.on{background:var(--panel2);box-shadow:0 0 0 3px var(--c),0 0 26px var(--c)}
-.r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0}
-.nm{font-family:var(--f-display);font-size:15px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.sq{font-size:12px;color:var(--mute);white-space:nowrap}
-.r2{display:flex;flex-direction:var(--dir,row);align-items:center;justify-content:space-between;gap:8px}
-#pp2,#pp3{--dir:row-reverse}
-.av{width:42px;height:42px;border-radius:50%;flex:none}
-.dice{position:relative;flex:none;width:60px;height:60px;padding:0;border:0;border-radius:14px;background:#fff;box-shadow:0 4px 0 #aeb9cc;cursor:default;display:block}
-.dice canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:14px}
-.dice.ready{cursor:pointer;box-shadow:0 4px 0 #b57f00,0 0 0 3px var(--saffron);animation:dicePulse 1s ease-in-out infinite}
+.lab{display:flex;flex-direction:column;gap:calc(var(--u)*.3);min-width:0;max-width:100%;text-shadow:0 calc(var(--u)*.3) 0 #0006}
+.nm{font-family:var(--f-display);font-size:calc(var(--u)*3.6);line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sq{font-size:calc(var(--u)*2.8);color:#ffe9ee;white-space:nowrap}
+.wd{display:flex;flex-direction:var(--dir);align-items:center;gap:calc(var(--u)*1.4)}
+.pin{position:relative;flex:none;width:calc(var(--u)*9);height:calc(var(--u)*15);border-radius:calc(var(--u)*2.4);background:#4aa8f2;box-shadow:0 calc(var(--u)*.6) 0 #2670b8;display:grid;place-items:center;color:var(--c)}
+.pin svg{width:calc(var(--u)*6.4);height:auto;display:block;filter:drop-shadow(0 calc(var(--u)*.3) 0 #0005)}
+.pin .av{position:absolute;left:50%;top:38%;width:calc(var(--u)*3.6);height:calc(var(--u)*3.6);transform:translate(-50%,-50%);border-radius:50%;background:#fff}
+.dice{position:relative;flex:none;width:calc(var(--u)*15);height:calc(var(--u)*15);padding:0;border:0;border-radius:calc(var(--u)*2.8);background:#ffb4c8;box-shadow:0 calc(var(--u)*.8) 0 #d9668a,inset 0 0 0 calc(var(--u)*.6) #ffd3df;cursor:default;display:block}
+.dice canvas{position:absolute;inset:8%;width:84%;height:84%}
+.dice.ready{cursor:pointer;animation:dicePulse 1s ease-in-out infinite}
 .dice.rolling{animation:diceShake .3s linear infinite}
+.arr{flex:none;width:0;height:0;border:calc(var(--u)*2.4) solid transparent;border-right-color:var(--arR);border-left-color:var(--arL);visibility:hidden}
+.pp.on .arr{visibility:visible;animation:nudge .8s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateX(calc(var(--u)*-.9))}}
+#pp2 .arr,#pp3 .arr{animation-name:nudgeR}
+@keyframes nudgeR{50%{transform:translateX(calc(var(--u)*.9))}}
 @keyframes dicePulse{50%{transform:scale(1.08)}}
 @keyframes diceShake{25%{transform:rotate(-9deg) translateY(-2px)}75%{transform:rotate(9deg) translateY(-2px)}}
-@media (prefers-reduced-motion:reduce){.dice.ready,.dice.rolling{animation:none}}
-.pills{display:flex;gap:4px;flex-wrap:wrap}
-.pill{font:800 11px var(--f-body);padding:2px 8px;border-radius:99px;color:#07182a;border:0}
+@media (prefers-reduced-motion:reduce){.dice.ready,.dice.rolling,.pp.on .arr{animation:none}}
+.pills{display:flex;gap:calc(var(--u)*.7);flex-wrap:wrap}
+.pill{font:800 calc(var(--u)*2.4) var(--f-body);padding:calc(var(--u)*.3) calc(var(--u)*1.4);border-radius:99px;color:#07182a;border:0}
 button.pill{cursor:pointer;box-shadow:0 0 0 2px #fff7}
 .pill.on{outline:2px solid #fff}
 .pill.d{background:var(--saffron)}.pill.s{background:var(--jade)}.pill.t{background:var(--sky)}
-/* Portrait: top panels face the players sitting opposite */
+/* Portrait: top widgets are turned around to face the players sitting opposite (label stays on the board side) */
 @media (orientation:portrait){
-  #app.flip #pp1,#app.flip #pp2{transform:rotate(180deg)}
-  #app.flip #pp1{--dir:row-reverse}
-  #app.flip #pp2{--dir:row}
+  #app.flip #pp1,#app.flip #pp2{flex-direction:column;transform:rotate(180deg)}
+  #app.flip #pp1{--dir:row-reverse;--arR:transparent;--arL:#ff8a00}
+  #app.flip #pp2{--dir:row;--arR:#ff8a00;--arL:transparent}
 }
 
 .toast{position:absolute;left:50%;top:11%;transform:translateX(-50%);padding:9px 18px;border-radius:999px;font-family:var(--f-display);font-size:clamp(17px,4.6vw,27px);color:#10213a;background:var(--saffron);box-shadow:0 8px 24px #0007;pointer-events:none;white-space:nowrap;animation:pop 1.6s ease forwards;z-index:5}
@@ -125,15 +137,14 @@ button.pill{cursor:pointer;box-shadow:0 0 0 2px #fff7}
 
 .opt{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--mute);line-height:1.4}
 .opt input{width:20px;height:20px;flex:none;accent-color:var(--saffron)}
-/* Landscape: panels in the left and right columns, board in the middle */
+/* Landscape: widgets in the side columns, board in the middle */
 @media (orientation:landscape){
-  #app{max-width:none;gap:6px 12px;
-    grid-template-columns:minmax(0,1fr) min-content minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;
-    grid-template-areas:"p2 board p3" "fab board ." "p1 board p4"}
-  #stageWrap{width:min(calc((100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)) * var(--ar,1)),calc(100vw - 360px));min-width:0}
-  .pp{padding:5px 8px 7px;gap:4px}
-  .av{width:34px;height:34px}
-  .dice{width:52px;height:52px}
-  .nm{font-size:14px}
+  #app{--u:.75dvh;width:100vw;max-width:none;
+    grid-template-columns:1fr auto 1fr;grid-template-rows:1fr 1fr;
+    grid-template-areas:"p2 board p3" "p1 board p4";padding:calc(var(--u)*2.5) calc(var(--u)*3);border-width:calc(var(--u)*1.6)}
+  #stageWrap{width:min(calc(100dvh - var(--u)*10),calc(100vw - var(--u)*100))}
+  .pp{width:calc(var(--u)*34);flex-direction:column!important;transform:none!important;align-self:center}
+  #pp0,#pp3{align-self:end}#pp1,#pp2{align-self:start}#pp1{margin-top:calc(var(--u)*9)}
+  .fab{left:calc(var(--u)*3);top:calc(var(--u)*3);width:calc(var(--u)*7);height:calc(var(--u)*7)}
   .card{max-width:920px}
 }
