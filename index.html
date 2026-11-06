@@ -26,37 +26,63 @@
         <button class="tool" data-snd="sfx" aria-pressed="true">Efek</button>
         <button class="go" id="btnMenuResume" type="button">Lanjutkan</button>
         <button class="ghost" id="btnMenuNew" type="button">Permainan baru</button>
+        <button class="ghost" id="btnMenuHome" type="button">Menu utama</button>
       </div>
     </div>
   </div>
   <p id="status" class="sr" aria-live="polite"></p>
 </div>
 
-<div class="sheet" id="setup">
+<div class="sheet" id="title">
+  <div class="tcard">
+    <div class="logo" aria-hidden="true">🐍🪜</div>
+    <h1 class="gname">Ular Tangga<span>Rimba</span></h1>
+    <nav class="tmenu" aria-label="Menu utama">
+      <button class="tbtn start" id="btnStart" type="button">Start</button>
+      <button class="tbtn" id="btnOpts" type="button">Options</button>
+      <button class="tbtn" id="btnGuide" type="button">Guide</button>
+      <button class="tbtn" id="btnExit" type="button">Exit</button>
+    </nav>
+  </div>
+</div>
+
+<div class="sheet modal" id="setup" hidden>
   <div class="card">
+    <h2>Pemain</h2>
     <div class="row" style="justify-content:space-between">
-      <div class="tools" style="flex:none">
-        <button class="tool" data-snd="music" aria-pressed="true">Musik</button>
-        <button class="tool" data-snd="sfx" aria-pressed="true">Efek</button>
-      </div>
-    </div>
-    <h2>Ular Tangga <span>Rimba</span></h2>
-    <p class="lead">Naik tangga, hindari ular, tembak lawan, dan sampai duluan di kotak 100. Atur pemain dulu, minimal satu manusia.</p>
-    <div class="row" style="justify-content:space-between">
-      <span class="label" style="flex:none">Jumlah pemain</span>
-      <div class="seg" id="segN" style="flex:none"></div>
+      <label class="label" for="selN" style="flex:none">Jumlah pemain</label>
+      <select class="sel" id="selN" style="flex:none"><option value="2">2 Player</option><option value="3">3 Player</option><option value="4">4 Player</option></select>
     </div>
     <div id="rows"></div>
-    <div class="label">Power-up dari kotak hadiah</div>
+    <button class="go" id="btnGo">Play</button>
+    <button class="ghost" id="btnResume">Kembali</button>
+  </div>
+</div>
+
+<div class="sheet modal" id="opts" hidden>
+  <div class="card">
+    <h2>Options</h2>
+    <div class="tools"><button class="tool" data-snd="music" aria-pressed="true">Musik</button><button class="tool" data-snd="sfx" aria-pressed="true">Efek</button></div>
+    <button class="ghost" data-close="opts">Tutup</button>
+  </div>
+</div>
+
+<div class="sheet modal" id="guide" hidden>
+  <div class="card">
+    <h2>Guide</h2>
+    <p class="lead">Naik tangga, hindari ular, dan sampai duluan di kotak 100. Melewati 100 membuat bidak memantul balik. Dapat angka 6 berarti melempar lagi, terus sampai bukan 6. Mendarat tepat di kotak lawan menembaknya mundur 10 kotak.</p>
     <div class="rules">
-      <div class="rule d"><b>Dobel Giliran</b>Aktifkan sebelum melempar. Setelah jalan, kamu melempar dadu sekali lagi.</div>
+      <div class="rule d"><b>Dobel Giliran</b>Aktifkan sebelum melempar. Setelah jalan, kamu melempar sekali lagi.</div>
       <div class="rule s"><b>Anti-Ular</b>Otomatis menolak gigitan ular berikutnya.</div>
       <div class="rule t"><b>Anti-Tembak</b>Otomatis menahan satu tembakan lawan.</div>
     </div>
-    <p class="lead">Mendarat tepat di kotak lawan menembaknya mundur 10 kotak. Lewat dari 100 membuat bidak memantul balik. Dapat angka 6 berarti melempar lagi, terus sampai bukan 6.</p>
-    <button class="go" id="btnGo">Mulai Main</button>
-    <button class="ghost" id="btnResume" hidden>Lanjutkan permainan</button>
+    <p class="lead">Power-up didapat dari kotak hadiah di papan. Ketuk dadu di baris atas saat gilirannmu untuk melempar.</p>
+    <button class="ghost" data-close="guide">Tutup</button>
   </div>
+</div>
+
+<div class="sheet modal" id="bye" hidden>
+  <div class="card"><h2>Sampai jumpa!</h2><p class="lead">Kamu bisa menutup tab atau aplikasi ini. Terima kasih sudah bermain.</p><button class="ghost" data-close="bye">Kembali</button></div>
 </div>
 
 <div class="sheet" id="end" hidden>
@@ -66,7 +92,7 @@
     <p class="lead" id="winSub">Sampai duluan di kotak 100.</p>
     <div class="row">
       <button class="go" id="btnAgain" style="font-size:20px">Main lagi</button>
-      <button class="ghost" id="btnToMenu">Ubah pemain</button>
+      <button class="ghost" id="btnToMenu">Menu utama</button>
     </div>
   </div>
 </div>
