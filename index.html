@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#b3202a">
+<meta name="theme-color" content="#14402a">
 <title>Ular Tangga Rimba</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/style.css">
@@ -16,6 +16,7 @@
     <div class="pp empty" id="pp1"></div>
     <div class="pp empty" id="pp2"></div>
     <div class="pp empty" id="pp3"></div>
+    <button class="dice" id="btnDice" type="button" aria-label="Lempar dadu" disabled><canvas width="120" height="120"></canvas></button>
   </div>
   <div id="stageWrap">
     <div id="stage"></div>
@@ -34,8 +35,26 @@
 </div>
 
 <div class="sheet" id="title">
+  <svg class="trees" viewBox="0 0 360 100" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><g fill="#0f3a22"><path d="M0 100 L0 60 L18 20 L36 60 L30 60 L48 28 L66 62 L60 62 L80 100Z"/><path d="M90 100 L110 46 L130 100Z"/><path d="M130 100 L150 30 L172 100Z"/><path d="M200 100 L222 38 L244 100Z"/><path d="M250 100 L272 56 L294 100Z"/><path d="M290 100 L312 22 L336 100 Z"/><path d="M330 100 L346 50 L360 70 L360 100Z"/></g></svg>
   <div class="tcard">
-    <div class="logo" aria-hidden="true">🐍🪜</div>
+    <svg class="scene" viewBox="0 0 360 210" role="img" aria-label="Ular dan tangga di hutan">
+      <ellipse cx="60" cy="150" rx="46" ry="62" fill="#1d6b3a"/><ellipse cx="40" cy="120" rx="30" ry="44" fill="#2a8a49"/>
+      <ellipse cx="318" cy="140" rx="44" ry="66" fill="#1d6b3a"/><ellipse cx="336" cy="110" rx="26" ry="40" fill="#2a8a49"/>
+      <g stroke-linecap="round">
+        <path d="M92 200 L156 24" stroke="#5b3a18" stroke-width="13" fill="none"/><path d="M128 208 L190 34" stroke="#5b3a18" stroke-width="13" fill="none"/>
+        <path d="M92 200 L156 24" stroke="#c98b45" stroke-width="7" fill="none"/><path d="M128 208 L190 34" stroke="#c98b45" stroke-width="7" fill="none"/>
+        <g stroke="#8a5a2b" stroke-width="8"><path d="M104 168 L140 175"/><path d="M116 136 L152 143"/><path d="M129 102 L165 109"/><path d="M141 68 L177 75"/></g>
+        <g stroke="#e0a860" stroke-width="3"><path d="M104 168 L140 175"/><path d="M116 136 L152 143"/><path d="M129 102 L165 109"/><path d="M141 68 L177 75"/></g>
+      </g>
+      <g fill="none" stroke-linecap="round">
+        <path d="M262 52 C340 76 214 112 282 150 S330 196 232 200" stroke="#14532b" stroke-width="30"/>
+        <path d="M262 52 C340 76 214 112 282 150 S330 196 232 200" stroke="#3fb860" stroke-width="24"/>
+        <path d="M262 52 C340 76 214 112 282 150 S330 196 232 200" stroke="#1d6b2f" stroke-width="9" stroke-dasharray="0 19"/>
+      </g>
+      <ellipse cx="254" cy="46" rx="21" ry="15" transform="rotate(-24 254 46)" fill="#4fcf6a" stroke="#14532b" stroke-width="3"/>
+      <circle cx="250" cy="38" r="5.5" fill="#fff"/><circle cx="263" cy="40" r="5.5" fill="#fff"/><circle cx="249" cy="38" r="2.6" fill="#14233d"/><circle cx="262" cy="40" r="2.6" fill="#14233d"/>
+      <path d="M236 50 L220 56 M220 56 L212 52 M220 56 L213 62" stroke="#ff3355" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
     <h1 class="gname">Ular Tangga<span>Rimba</span></h1>
     <nav class="tmenu" aria-label="Menu utama">
       <button class="tbtn start" id="btnStart" type="button">Start</button>
@@ -54,6 +73,7 @@
       <select class="sel" id="selN" style="flex:none"><option value="2">2 Player</option><option value="3">3 Player</option><option value="4">4 Player</option></select>
     </div>
     <div id="rows"></div>
+    <label class="opt"><input type="checkbox" id="optRand"> Acak posisi ular, tangga &amp; power-up</label>
     <button class="go" id="btnGo">Play</button>
     <button class="ghost" id="btnResume">Kembali</button>
   </div>

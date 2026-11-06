@@ -12,16 +12,9 @@ const UI={
       el.textContent='';
       if(!p){el.className='pp empty';continue;}
       const active=G.cur===i&&!G.over,mine=active&&p.type==='human'&&!!this._roll;
-      el.className='pp'+(active?' on':'');el.style.setProperty('--c',p.color);
-      const lab=mk('div','lab');const nm=mk('span','nm');nm.append(mk('i'),document.createTextNode('P'+(i+1)));
-      lab.appendChild(nm);el.title=p.name;
-      const wd=el;
+      el.className='pp'+(active?' on':'');el.style.setProperty('--c',p.color);el.title=p.name;
+      const lab=mk('div','lab'),nm=mk('span','nm');nm.append(mk('i'),document.createTextNode('P'+(i+1)));lab.appendChild(nm);
       const av=mk('img','av');av.src=p.avUrl;av.alt=p.name;
-      const d=mk('button','dice');d.type='button';
-      const cv=document.createElement('canvas');cv.width=cv.height=120;drawDieFace(cv,p.last,mine);d.appendChild(cv);
-      if(mine){d.classList.add('ready');d.setAttribute('aria-label','Lempar dadu');d.addEventListener('click',()=>UI.tapRoll());}
-      else{d.disabled=true;d.tabIndex=-1;d.setAttribute('aria-label','Dadu '+p.name);}
-      if(this._rolling===i)d.classList.add('rolling');
       const pl=mk('div','pills');
       if(p.armed)pl.appendChild(mk('span','pill d on','Dobel aktif'));
       [['dbl','d','Dobel'],['ss','s','Anti-ular'],['ts','t','Anti-tembak']].forEach(([k,c,l])=>{
@@ -32,8 +25,12 @@ const UI={
         pl.appendChild(s);
       });
       if(pl.childNodes.length)lab.appendChild(pl);
-      el.append(lab,d);
+      el.append(av,lab);
     }
+    const cur=G.players[G.cur],ready=!!cur&&!G.over&&cur.type==='human'&&!!this._roll,d=$('#btnDice');
+    drawDieFace(d.querySelector('canvas'),cur?cur.last:null,ready);
+    d.disabled=!ready;d.classList.toggle('ready',ready);d.classList.toggle('rolling',this._rolling>=0);
+    d.style.setProperty('--c',cur?cur.color:'#fff');
   },
   status(t){$('#status').textContent=t;},
   turn(p){
@@ -45,7 +42,7 @@ const UI={
   tapRoll(){const r=this._roll;if(r&&!this.paused){this._roll=null;Sound.click();this.render();r();}},
   rollStart(p){
     clearInterval(this._iv);this._rolling=p.i;this.render();
-    this._iv=setInterval(()=>{const c=document.querySelector('#pp'+p.i+' canvas');if(c)drawDieFace(c,1+Math.floor(Math.random()*6),false);},90);
+    this._iv=setInterval(()=>{const c=document.querySelector('#btnDice canvas');if(c)drawDieFace(c,1+Math.floor(Math.random()*6),false);},90);
   },
   rollEnd(p,v){clearInterval(this._iv);this._rolling=-1;p.last=v;this.render();},
   toast(msg,kind){
@@ -77,7 +74,7 @@ document.querySelectorAll('[data-snd]').forEach(b=>b.addEventListener('click',()
 }));
 
 /* setup sheet */
-const cfg={n:3,slots:[
+const cfg={n:3,rand:false,slots:[
   {name:'Pemain 1',type:'human',icon:'horse',img:null},
   {name:'Komputer 1',type:'cpu',icon:'cat',img:null},
   {name:'Komputer 2',type:'cpu',icon:'dog',img:null},
@@ -131,8 +128,9 @@ function startNew(players){
   UI._roll=null;clearInterval(UI._iv);UI._rolling=-1;
   lastPlayers=players;inGame=true;$('#title').hidden=true;$('#setup').hidden=true;$('#end').hidden=true;
   setDims();game.scale.resize(VW,VH);requestAnimationFrame(()=>game.scale.refresh());
-  const sc=game.scene.getScene('board');game.scene.resume('board');sc.scene.restart({players});
+  const sc=game.scene.getScene('board');game.scene.resume('board');sc.scene.restart({players,rand:cfg.rand});
 }
+$('#optRand').addEventListener('change',e=>{cfg.rand=e.target.checked;});
 $('#selN').addEventListener('change',e=>{cfg.n=+e.target.value;renderSetup();});
 $('#btnGo').addEventListener('click',()=>{
   if(!game)return;
@@ -155,6 +153,7 @@ $('#btnMenuResume').addEventListener('click',()=>closeMenu(true));
 $('#menu').addEventListener('click',e=>{if(e.target.id==='menu')closeMenu(true);});
 $('#btnMenuNew').addEventListener('click',()=>{closeMenu(false);openSetup();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#menu').hidden)closeMenu(true);});
+$('#btnDice').addEventListener('click',()=>UI.tapRoll());
 $('#btnAgain').addEventListener('click',()=>{if(lastPlayers)startNew(lastPlayers);});
 function showTitle(){
   if(game)game.scene.pause('board');
@@ -172,6 +171,6 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
   syncSnd();renderSetup();
   try{await Promise.race([document.fonts.load('20px "Lilita One"'),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   if(!window.Phaser){UI.status('Phaser gagal dimuat. Periksa koneksi lalu muat ulang halaman.');return;}
-  game=new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:VW,height:VH,backgroundColor:'#f4b90b',
+  game=new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:VW,height:VH,backgroundColor:'#14402a',
     scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},audio:{noAudio:true},scene:[BoardScene]});
 })();

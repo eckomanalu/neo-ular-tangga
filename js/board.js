@@ -12,9 +12,23 @@ function setDims(){
   document.documentElement.style.setProperty('--ar',String(AR));
 }
 setDims();
-const LADDERS={4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
-const SNAKES={16:6,47:26,49:11,62:19,87:24,93:73,95:75,98:78};
-const GIFTS=[12,25,33,45,58,66,77,89];
+const LADDERS={},SNAKES={},GIFTS=[];
+const DEF={L:{4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100},S:{16:6,47:26,49:11,62:19,87:24,93:73,95:75,98:78},G:[12,25,33,45,58,66,77,89]};
+/* Default layout, or a random one: 8 ladders, 8 snakes, 8 gift boxes on distinct cells */
+function applyLayout(rand){
+  const L={},S={},Gf=[];
+  if(!rand){Object.assign(L,DEF.L);Object.assign(S,DEF.S);Gf.push(...DEF.G);}
+  else{
+    const used=new Set([1,100]),ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),row=n=>Math.floor((n-1)/10);
+    let k=0;
+    while(Object.keys(L).length<8&&k++<800){const a=ri(2,85),b=a+ri(10,45);if(b>99||row(b)<=row(a)||used.has(a)||used.has(b))continue;L[a]=b;used.add(a);used.add(b);}
+    k=0;while(Object.keys(S).length<8&&k++<800){const h=ri(12,99),t=h-ri(10,50);if(t<2||row(h)<=row(t)||used.has(h)||used.has(t))continue;S[h]=t;used.add(h);used.add(t);}
+    k=0;while(Gf.length<8&&k++<800){const g=ri(3,98);if(used.has(g))continue;Gf.push(g);used.add(g);}
+  }
+  [LADDERS,SNAKES].forEach(o=>Object.keys(o).forEach(key=>delete o[key]));
+  Object.assign(LADDERS,L);Object.assign(SNAKES,S);GIFTS.splice(0,GIFTS.length,...Gf);
+}
+applyLayout(false);
 const SCOL=[['#4cc24f','#2f9a35'],['#62d35c','#3aa83f'],['#3fb860','#278c45'],['#7bd650','#4aa332']];
 const PW={dbl:'Dobel Giliran',ss:'Anti-Ular',ts:'Anti-Tembak'};
 const G={scene:null,players:[],cur:0,session:0,over:false};
@@ -31,7 +45,7 @@ class BoardScene extends Phaser.Scene{
   constructor(){super('board');}
   init(d){this.cfg=d||{players:[]};}
   create(){
-    G.scene=this;const sid=++G.session;this.T=0;this.toks=[];
+    G.scene=this;const sid=++G.session;this.T=0;this.toks=[];this.zoomed=false;applyLayout(!!this.cfg.rand);
     if(!this.textures.exists('gift'))this.textures.addCanvas('gift',makeGift(160));
     this.drawBoard();this.makeSL();this.makeGifts();this.makeDice();
     const cam=this.cameras.main;cam.setBounds(0,0,WW,WH);cam.setZoom(ZOUT);cam.centerOn(WW/2,WH/2);
@@ -39,7 +53,7 @@ class BoardScene extends Phaser.Scene{
   }
   drawBoard(){
     const g=this.add.graphics().setDepth(0);
-    g.fillStyle(0xf4b90b,1);g.fillRect(0,0,WW,WH);
+    g.fillStyle(0x14402a,1);g.fillRect(0,0,WW,WH);
     const st={fontFamily:'"Lilita One","Trebuchet MS",sans-serif',fontSize:'22px',color:'#d0467a',resolution:4};
     for(let n=1;n<=100;n++){
       const c=cell(n),x0=c.x-Sx/2,y0=c.y-Sy/2;
@@ -106,6 +120,7 @@ class BoardScene extends Phaser.Scene{
       if(act&&!t.busy){t.body.y=-Math.abs(Math.sin(T*5))*5;
         const b=Math.sin(T*5)*3;a.fillStyle(0xffb703,1);a.fillTriangle(-8,-38+b,8,-38+b,0,-27+b);}
       else if(!t.busy)t.body.y=0;
+      if(t.dizzy)for(let k=0;k<3;k++){const an=T*7+k*2.094,sx=Math.cos(an)*19,sy=-30+Math.sin(an)*6;a.fillStyle(0xffe14a,1);a.fillCircle(sx,sy,4.5);a.fillStyle(0xffffff,0.9);a.fillCircle(sx-1,sy-1,1.7);}
       const pul=0.5+0.4*Math.sin(T*4);
       if(t.p.ss>0){a.lineStyle(3,0x2ec4a6,pul);a.strokeCircle(0,0,29);}
       if(t.p.ts>0){a.lineStyle(3,0x4cc9f0,pul);a.strokeCircle(0,0,t.p.ss>0?34:29);}
@@ -163,12 +178,14 @@ class BoardScene extends Phaser.Scene{
 
   /* ----- camera: the whole board stays in view; zoom in only for ladder climbs and snake bites ----- */
   async focusIn(t,dur){
+    if(this.zoomed)return;this.zoomed=true;
     const cam=this.cameras.main;
     cam.startFollow(t.c,false,0.12,0.12);
     cam.zoomTo(ZIN,dur,'Sine.easeInOut',true);
     await wait(dur+40);
   }
   async focusOut(dur){
+    if(!this.zoomed)return;this.zoomed=false;
     const cam=this.cameras.main;
     cam.zoomTo(ZOUT,dur,'Sine.easeInOut',true);
     await wait(dur+40);
@@ -192,11 +209,11 @@ class BoardScene extends Phaser.Scene{
     const t=this.add.text(x,y,str,{fontFamily:'"Lilita One","Trebuchet MS",sans-serif',fontSize:'17px',color:color||'#ffffff',stroke:'#14233d',strokeThickness:4,resolution:4}).setOrigin(.5).setDepth(25);
     this.tweens.add({targets:t,y:y-34,alpha:0,duration:1000,ease:'Cubic.easeOut',onComplete:()=>t.destroy()});
   }
-  confetti(){
-    const cols=['#ff5d73','#4cc9f0','#ffb703','#2ec4a6','#ffffff','#8e7dff'],wv=this.cameras.main.worldView;
-    for(let i=0;i<110;i++){
-      const r=this.add.rectangle(wv.x+Math.random()*wv.width,wv.y-20-Math.random()*200,8+Math.random()*6,12,hx(cols[i%cols.length])).setDepth(40);
-      this.tweens.add({targets:r,y:wv.bottom+30,x:r.x+(Math.random()-.5)*160,angle:Math.random()*900,duration:1800+Math.random()*1800,ease:'Sine.easeIn',onComplete:()=>r.destroy()});
+  confetti(cx,cy,n){
+    const cols=['#ff5d73','#4cc9f0','#ffb703','#2ec4a6','#ffffff','#8e7dff'],wv=this.cameras.main.worldView,loc=cx!=null;
+    for(let i=0;i<(n||110);i++){
+      const r=this.add.rectangle(loc?cx+(Math.random()-.5)*130:wv.x+Math.random()*wv.width,loc?cy-90-Math.random()*60:wv.y-20-Math.random()*200,8+Math.random()*6,12,hx(cols[i%cols.length])).setDepth(40);
+      this.tweens.add({targets:r,y:loc?cy+70:wv.bottom+30,x:r.x+(Math.random()-.5)*160,angle:Math.random()*900,duration:1800+Math.random()*1800,ease:'Sine.easeIn',onComplete:()=>r.destroy()});
     }
   }
   /* ----- tokens ----- */
@@ -290,7 +307,7 @@ class BoardScene extends Phaser.Scene{
     if(s)this.tweens.add({targets:s,excite:0.6,mouth:0.5,duration:260,yoyo:true});
   }
   async moveBy(p,v){
-    const t=this.toks[p.i];t.busy=true;
+    const t=this.toks[p.i];t.busy=true;await this.focusIn(t,450);
     let pos=p.pos,dir=1;const path=[];
     for(let i=0;i<v;i++){if(pos+dir>100)dir=-1;pos+=dir;path.push(pos);}
     this.floatText(t.c.x,t.c.y-40,'+'+v,'#ffe58f');
@@ -303,38 +320,54 @@ class BoardScene extends Phaser.Scene{
     await this.settle();
     await this.combat(p,t);
     if(p.pos!==100&&GIFTS.includes(p.pos))await this.gift(p,t);
-    t.busy=false;
+    t.busy=false;await this.focusOut(550);
     if(p.pos===100)await this.win(p);
   }
+  cheer(t){
+    const x=t.c.x,y=t.c.y,cols=['#ff5d73','#4cc9f0','#ffb703','#2ec4a6','#ffffff','#8e7dff','#ff8fab'];
+    cols.forEach((c,i)=>this.time.delayedCall(i*70,()=>this.ring(x,y,c)));
+    for(let i=0;i<4;i++)this.burst(x,y,cols[i*2%cols.length],10,70,800);
+    this.confetti(x,y,60);this.floatText(x,y-46,'Yeay!','#ffe58f');
+  }
   async climb(t,p){
-    const L=this.lad.find(l=>l.a===p.pos),cnt=ladderRungs(L),dest=LADDERS[p.pos];
+    const L=this.lad.find(l=>l.a===p.pos),cnt=ladderRungs(L),dest=LADDERS[p.pos],rb=['#ff5d73','#ffb703','#7bd94a','#4cc9f0','#8e7dff'];
     UI.toast('Naik tangga!','good');await this.focusIn(t,550);Sound.ladder(1.5,cnt);
     this.tweens.add({targets:L,pulse:1,duration:300});
     const pr={u:0};
     await tw({targets:pr,u:1,duration:1500,ease:'Sine.easeInOut',onUpdate:()=>{
       const f=pr.u;t.c.setPosition(lerp(L.A.x,L.B.x,f),lerp(L.A.y,L.B.y,f));L.lit=f;
       t.body.y=-6-Math.abs(Math.sin(f*Math.PI*cnt))*9;
-      if(Math.random()<0.25)this.burst(t.c.x,t.c.y+10,'#ffe58f',1,16,400);}});
-    t.body.y=0;p.pos=dest;UI.render();this.burst(t.c.x,t.c.y,'#ffd166',16,50,600);this.ring(t.c.x,t.c.y,'#ffd166');
-    await wait(400);
-    this.tweens.add({targets:L,lit:-1,pulse:0,duration:500});L.lit=-1;await this.focusOut(650);
+      if(Math.random()<0.5)this.burst(t.c.x,t.c.y+10,rb[Math.floor(Math.random()*rb.length)],2,22,500);}});
+    t.body.y=0;p.pos=dest;UI.render();Sound.cheer();UI.toast('Yeay! Naik ke '+dest,'good');this.cheer(t);
+    this.tweens.add({targets:t.body,rotation:Math.PI*2,duration:900,ease:'Cubic.easeOut',onComplete:()=>{t.body.rotation=0;}});
+    for(let k=0;k<3;k++){
+      this.tweens.add({targets:t.body,y:-26,duration:150,yoyo:true,ease:'Quad.easeOut'});
+      await wait(300);
+    }
+    await wait(250);
+    this.tweens.add({targets:L,lit:-1,pulse:0,duration:500});L.lit=-1;
   }
   async bitten(t,p){
     const sn=this.snk.find(s=>s.h===p.pos);sn.front=true;await this.focusIn(t,500);
     Sound.hiss();await tw({targets:sn,excite:1,mouth:1,duration:380});
     if(p.ss>0){
       p.ss--;Sound.shield();UI.toast('Anti-Ular! Aman','power');this.ring(t.c.x,t.c.y,'#2ec4a6');this.burst(t.c.x,t.c.y,'#2ec4a6',16,50,600);
-      await wait(500);await tw({targets:sn,excite:0,mouth:0,duration:500});sn.front=false;UI.render();await this.focusOut(600);return;
+      await wait(500);await tw({targets:sn,excite:0,mouth:0,duration:500});sn.front=false;UI.render();return;
     }
-    Sound.bite();UI.toast('Digigit ular!','bad');this.cameras.main.shake(280,0.009);
-    t.body.setTint(0xff5555);this.burst(t.c.x,t.c.y,'#ff5d73',14,45,500);await wait(450);t.body.clearTint();
-    Sound.slide();const pr={u:0};
+    const cam=this.cameras.main;
+    Sound.bite();Sound.poison();UI.toast('Digigit! Kena racun','bad');cam.shake(280,0.009);cam.flash(380,90,255,70);
+    t.body.setTint(0x7dff6a);t.dizzy=true;
+    this.burst(t.c.x,t.c.y,'#7dff4a',22,55,800);this.burst(t.c.x,t.c.y,'#2ec24a',12,40,700);this.ring(t.c.x,t.c.y,'#7dff4a');
+    await wait(450);
+    Sound.dizzy(1.9);const pr={u:0};
     await tw({targets:pr,u:1,duration:1400,ease:'Sine.easeIn',onUpdate:()=>{
       const pts=this.snakePts(sn,this.T),pp=pts[Math.min(pts.length-1,Math.floor(pr.u*(pts.length-1)))];
-      t.c.setPosition(pp.x,pp.y);t.body.rotation=pr.u*12;t.body.setScale(t.base*(1-0.25*Math.sin(pr.u*Math.PI)));}});
+      t.c.setPosition(pp.x+Math.sin(pr.u*34)*7,pp.y);t.body.rotation=Math.sin(pr.u*30)*0.75;t.body.setScale(t.base*(1-0.25*Math.sin(pr.u*Math.PI)));
+      if(Math.random()<0.4)this.burst(t.c.x,t.c.y-8,'#7dff4a',1,24,550);}});
     t.body.rotation=0;t.body.setScale(t.base);p.pos=SNAKES[p.pos];UI.render();
-    this.dust(t.c.x,t.c.y+10);this.ring(t.c.x,t.c.y,'#ff5d73');
-    await tw({targets:sn,excite:0,mouth:0,duration:600});sn.front=false;await this.focusOut(650);
+    this.dust(t.c.x,t.c.y+10);this.ring(t.c.x,t.c.y,'#7dff4a');
+    await tw({targets:sn,excite:0,mouth:0,duration:600});sn.front=false;
+    await wait(500);t.body.clearTint();t.dizzy=false;
   }
   async combat(p,t){
     if(p.pos===1||p.pos===100)return;
