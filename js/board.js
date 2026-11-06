@@ -1,7 +1,17 @@
 /* ===== Board, snakes, ladders (drawn and animated every frame) ===== */
-const W=720,M=18,S=(W-2*M)/10;
-const BOX=Math.min(900,(window.innerWidth>window.innerHeight)?Math.min(window.innerHeight-16,window.innerWidth-360):window.innerWidth-32);
-const VIEW=Math.round(Math.max(720,Math.min(1080,BOX*Math.min(window.devicePixelRatio||1,2.5)))/10)*10,ZIN=VIEW/360,ZOUT=VIEW/720,TK=192;
+const M=18,TK=192;
+let WW=720,WH=720,Sx=68.4,Sy=68.4,VW=720,VH=720,ZIN=2,ZOUT=1,AR=1;
+/* Board shape: tall tiles (ratio 0.7) in portrait, square in landscape. Re-run before each new game. */
+function setDims(){
+  const land=window.innerWidth>window.innerHeight;
+  AR=land?1:0.7;
+  const box=land?Math.min(window.innerHeight-16,window.innerWidth-360):Math.min(900,window.innerWidth-32);
+  VW=Math.round(Math.max(720,Math.min(land?1080:960,box*Math.min(window.devicePixelRatio||1,2.5)))/10)*10;
+  WW=720;WH=Math.round(WW/AR);VH=Math.round(VW/AR);
+  Sx=(WW-2*M)/10;Sy=(WH-2*M)/10;ZOUT=VW/WW;ZIN=ZOUT*2;
+  document.documentElement.style.setProperty('--ar',String(AR));
+}
+setDims();
 const LADDERS={4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
 const SNAKES={16:6,47:26,49:11,62:19,87:24,93:73,95:75,98:78};
 const GIFTS=[12,25,33,45,58,66,77,89];
@@ -11,7 +21,7 @@ const PW={dbl:'Dobel Giliran',ss:'Anti-Ular',ts:'Anti-Tembak'};
 const G={scene:null,players:[],cur:0,session:0,over:false};
 const hx=s=>parseInt(s.slice(1),16);
 const lerp=(a,b,t)=>a+(b-a)*t;
-function cell(n){const i=n-1,row=Math.floor(i/10);let col=i%10;if(row%2)col=9-col;return{x:M+col*S+S/2,y:W-M-row*S-S/2,row,col};}
+function cell(n){const i=n-1,row=Math.floor(i/10);let col=i%10;if(row%2)col=9-col;return{x:M+col*Sx+Sx/2,y:WH-M-row*Sy-Sy/2,row,col};}
 const wait=ms=>new Promise(r=>G.scene.time.delayedCall(ms,r));
 const tw=cfg=>new Promise(res=>G.scene.tweens.add(Object.assign({},cfg,{onComplete:()=>res()})));
 function ellPts(cx,cy,rx,ry,ang){const o=[],ca=Math.cos(ang),sa=Math.sin(ang);
@@ -25,25 +35,25 @@ class BoardScene extends Phaser.Scene{
     G.scene=this;const sid=++G.session;this.T=0;this.toks=[];
     if(!this.textures.exists('gift'))this.textures.addCanvas('gift',makeGift(160));
     this.drawBoard();this.makeSL();this.makeGifts();this.makeDice();
-    const cam=this.cameras.main;cam.setBounds(0,0,W,W);cam.setZoom(ZOUT);cam.centerOn(W/2,W/2);
+    const cam=this.cameras.main;cam.setBounds(0,0,WW,WH);cam.setZoom(ZOUT);cam.centerOn(WW/2,WH/2);
     if(this.cfg.players&&this.cfg.players.length)this.startGame(this.cfg.players,sid);
   }
   drawBoard(){
     const g=this.add.graphics().setDepth(0);
-    g.fillStyle(0x4a2f17,1);g.fillRect(0,0,W,W);
-    g.fillStyle(0x6b4423,1);g.fillRoundedRect(4,4,W-8,W-8,16);
-    g.fillStyle(0x8a5a2b,1);g.fillRoundedRect(10,10,W-20,W-20,10);
-    const st={fontFamily:'"Lilita One","Trebuchet MS",sans-serif',fontSize:'14px',color:'#8a6330',resolution:4};
+    g.fillStyle(0x4a2f17,1);g.fillRect(0,0,WW,WH);
+    g.fillStyle(0x6b4423,1);g.fillRoundedRect(4,4,WW-8,WH-8,16);
+    g.fillStyle(0x8a5a2b,1);g.fillRoundedRect(10,10,WW-20,WH-20,10);
+    const st={fontFamily:'"Lilita One","Trebuchet MS",sans-serif',fontSize:'23px',color:'#8a6330',resolution:4};
     for(let n=1;n<=100;n++){
-      const c=cell(n),x0=c.x-S/2,y0=c.y-S/2;
+      const c=cell(n),x0=c.x-Sx/2,y0=c.y-Sy/2;
       let col=(c.row+c.col)%2?0xfff1c9:0xffdf9e;
       if(LADDERS[n])col=0xcdeebb;else if(SNAKES[n])col=0xffc9c9;else if(n===1)col=0xbfe3ff;else if(n===100)col=0xffe58f;
-      g.fillStyle(col,1);g.fillRect(x0+.5,y0+.5,S-1,S-1);
+      g.fillStyle(col,1);g.fillRect(x0+.5,y0+.5,Sx-1,Sy-1);
       this.add.text(x0+4,y0+2,String(n),st).setDepth(1);
     }
-    const lab={fontFamily:st.fontFamily,fontSize:'11px',color:'#3b6ea8',resolution:4};
-    const c1=cell(1);this.add.text(c1.x,c1.y+S/2-4,'MULAI',lab).setOrigin(.5,1).setDepth(1);
-    const c100=cell(100);lab.color='#a97500';this.add.text(c100.x,c100.y+S/2-4,'FINISH',lab).setOrigin(.5,1).setDepth(1);
+    const lab={fontFamily:st.fontFamily,fontSize:'13px',color:'#3b6ea8',resolution:4};
+    const c1=cell(1);this.add.text(c1.x,c1.y+Sy/2-4,'MULAI',lab).setOrigin(.5,1).setDepth(1);
+    const c100=cell(100);lab.color='#a97500';this.add.text(c100.x,c100.y+Sy/2-4,'FINISH',lab).setOrigin(.5,1).setDepth(1);
   }
   makeSL(){
     this.lad=Object.entries(LADDERS).map(([a,b])=>({a:+a,b:+b,A:cell(+a),B:cell(+b),lit:-1,pulse:0}));
@@ -63,8 +73,8 @@ class BoardScene extends Phaser.Scene{
     });
   }
   makeDice(){
-    const c=this.add.container(W/2,W/2).setDepth(30).setScrollFactor(0).setVisible(false);
-    const sh=this.add.ellipse(W/2,W/2+78,90,22,0x000000,.35).setDepth(29).setScrollFactor(0).setVisible(false);
+    const c=this.add.container(VW/2,VH/2).setDepth(30).setScrollFactor(0).setVisible(false);
+    const sh=this.add.ellipse(VW/2,VH/2+78,90,22,0x000000,.35).setDepth(29).setScrollFactor(0).setVisible(false);
     const g=this.add.graphics();c.add(g);this.dice={c,g,sh};
   }
   drawDie(v){
@@ -150,7 +160,7 @@ class BoardScene extends Phaser.Scene{
     const cam=this.cameras.main;
     cam.zoomTo(ZOUT,dur,'Sine.easeInOut',true);
     await wait(dur+40);
-    cam.stopFollow();cam.centerOn(W/2,W/2);
+    cam.stopFollow();cam.centerOn(WW/2,WH/2);
   }
   /* ----- effects ----- */
   burst(x,y,color,n,spd,life){
@@ -188,7 +198,7 @@ class BoardScene extends Phaser.Scene{
       const body=this.add.image(0,0,'tok'+p.i),base=46/TK;body.setScale(base);c.add([sh,aura,body]);
       return{c,sh,aura,body,p,base,busy:false};
     });
-    this.settle(true);const cam=this.cameras.main;cam.setZoom(ZOUT);cam.centerOn(W/2,W/2);
+    this.settle(true);const cam=this.cameras.main;cam.setZoom(ZOUT);cam.centerOn(WW/2,WH/2);
     this.loop(sid);
   }
   async settle(instant){
@@ -237,9 +247,9 @@ class BoardScene extends Phaser.Scene{
     return more;
   }
   async rollDice(v,pl){
-    const d=this.dice,c=d.c,cam=this.cameras.main,u=VIEW/1080/cam.zoom,ds=2*u,V=VIEW/2,y0=V-170*u,yUp=y0-80*u;
-    c.setPosition(V,y0).setScale(0).setAlpha(1).setRotation(0).setVisible(true);
-    d.sh.setPosition(V,y0+150*u).setVisible(true).setAlpha(0.1).setScale(ds*0.6);
+    const d=this.dice,c=d.c,cam=this.cameras.main,u=VW/1080/cam.zoom,ds=2*u,Vx=VW/2,Vy=VH/2,y0=Vy-170*u,yUp=y0-80*u;
+    c.setPosition(Vx,y0).setScale(0).setAlpha(1).setRotation(0).setVisible(true);
+    d.sh.setPosition(Vx,y0+150*u).setVisible(true).setAlpha(0.1).setScale(ds*0.6);
     this.drawDie(1+Math.floor(Math.random()*6));Sound.rattle(1.15);if(pl)UI.rollStart(pl);
     this.tweens.add({targets:c,scale:ds*1.2,duration:220,ease:'Back.easeOut'});
     this.tweens.add({targets:c,rotation:Math.PI*6*(Math.random()<0.5?1:-1),duration:1150,ease:'Cubic.easeOut'});

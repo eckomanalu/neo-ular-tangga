@@ -2,7 +2,7 @@
 
 Game ular tangga untuk 2–4 pemain, dibuat dengan [Phaser 3](https://phaser.io). Semua gambar (papan, ular, tangga, token, dadu, kotak hadiah) digambar lewat kode, dan musik serta efek suara disintesis langsung dengan WebAudio, jadi tidak ada file gambar atau audio.
 
-Seluruh papan selalu terlihat. Kartu pemain 1–4 ada di empat sudut layar dan masing-masing punya dadu sendiri (ketuk dadumu untuk melempar). Di portrait, kartu pemain atas diputar menghadap pemain di seberang (bisa dimatikan di layar pengaturan). Di landscape, kartu ada di kiri dan kanan papan.
+Layar utama hanya berisi papan dan kartu pemain. Musik, efek, dan permainan baru ada di menu (ikon di pojok kiri atas papan). Di portrait kotak papan dibuat tinggi seperti papan fisik, di landscape persegi. Seluruh papan selalu terlihat. Kartu pemain 1–4 ada di empat sudut layar dan masing-masing punya dadu sendiri (ketuk dadumu untuk melempar). Di portrait, kartu pemain atas diputar menghadap pemain di seberang (bisa dimatikan di layar pengaturan). Di landscape, kartu ada di kiri dan kanan papan.
 
 ## Fitur
 

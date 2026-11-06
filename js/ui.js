@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s);
 let game=null,inGame=false,lastPlayers=null;
 const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;};
 const UI={
-  _roll:null,_iv:null,_rolling:-1,
+  _roll:null,_iv:null,_rolling:-1,paused:false,
   render(){
     for(let i=0;i<4;i++){
       const el=document.getElementById('pp'+i),p=G.players[i];
@@ -27,7 +27,7 @@ const UI={
         if(p[k]<=0)return;
         const use=k==='dbl'&&mine&&!p.armed;
         const s=mk(use?'button':'span','pill '+c,l+' '+p[k]);
-        if(use){s.type='button';s.addEventListener('click',()=>G.scene.armDouble(p));}
+        if(use){s.type='button';s.addEventListener('click',()=>{if(!UI.paused)G.scene.armDouble(p);});}
         pl.appendChild(s);
       });
       el.append(r1,r2);if(pl.childNodes.length)el.appendChild(pl);
@@ -40,7 +40,7 @@ const UI={
   },
   waitRoll(){return new Promise(res=>{this._roll=res;this.render();});},
   lock(){this._roll=null;this.render();},
-  tapRoll(){const r=this._roll;if(r){this._roll=null;Sound.click();this.render();r();}},
+  tapRoll(){const r=this._roll;if(r&&!this.paused){this._roll=null;Sound.click();this.render();r();}},
   rollStart(p){
     clearInterval(this._iv);this._rolling=p.i;this.render();
     this._iv=setInterval(()=>{const c=document.querySelector('#pp'+p.i+' canvas');if(c)drawDieFace(c,1+Math.floor(Math.random()*6),false);},90);
@@ -132,17 +132,36 @@ function startNew(players){
   Sound.init();syncSnd();
   UI._roll=null;clearInterval(UI._iv);UI._rolling=-1;
   lastPlayers=players;inGame=true;$('#setup').hidden=true;$('#end').hidden=true;
+  setDims();game.scale.resize(VW,VH);requestAnimationFrame(()=>game.scale.refresh());
   const sc=game.scene.getScene('board');game.scene.resume('board');sc.scene.restart({players});
 }
 $('#btnGo').addEventListener('click',()=>{
   if(!game)return;
-  $('#app').classList.toggle('flip',$('#optFlip').checked);
   startNew(cfg.slots.slice(0,cfg.n).map((s,i)=>({
     name:(s.name||'').trim()||(s.type==='cpu'?'Komputer '+i:'Pemain '+(i+1)),
     type:s.type,icon:s.icon,img:s.img,color:PCOL[i]})));
 });
 $('#btnResume').addEventListener('click',()=>{$('#setup').hidden=true;if(game)game.scene.resume('board');});
-$('#btnMenu').addEventListener('click',openSetup);
+function openMenu(){
+  if(!$('#menu').hidden)return;
+  UI.paused=true;if(game)game.scene.pause('board');
+  $('#menu').hidden=false;$('#btnMenuResume').focus();
+}
+function closeMenu(resume){
+  $('#menu').hidden=true;UI.paused=false;
+  if(resume&&game)game.scene.resume('board');
+}
+$('#btnMenu').addEventListener('click',openMenu);
+$('#btnMenuResume').addEventListener('click',()=>closeMenu(true));
+$('#menu').addEventListener('click',e=>{if(e.target.id==='menu')closeMenu(true);});
+$('#btnMenuNew').addEventListener('click',()=>{closeMenu(false);openSetup();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#menu').hidden)closeMenu(true);});
+function setFlip(v){
+  cfg.flip=v;$('#app').classList.toggle('flip',v);
+  ['#optFlip','#optFlip2'].forEach(s=>{$(s).checked=v;});
+}
+['#optFlip','#optFlip2'].forEach(s=>$(s).addEventListener('change',e=>setFlip(e.target.checked)));
+setFlip(true);
 $('#btnAgain').addEventListener('click',()=>{if(lastPlayers)startNew(lastPlayers);});
 $('#btnToMenu').addEventListener('click',()=>{$('#end').hidden=true;inGame=false;openSetup();});
 
@@ -150,6 +169,6 @@ $('#btnToMenu').addEventListener('click',()=>{$('#end').hidden=true;inGame=false
   syncSnd();renderSetup();
   try{await Promise.race([document.fonts.load('20px "Lilita One"'),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   if(!window.Phaser){UI.status('Phaser gagal dimuat. Periksa koneksi lalu muat ulang halaman.');return;}
-  game=new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:VIEW,height:VIEW,backgroundColor:'#4a2f17',
+  game=new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:VW,height:VH,backgroundColor:'#4a2f17',
     scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},audio:{noAudio:true},scene:[BoardScene]});
 })();
