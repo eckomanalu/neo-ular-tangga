@@ -1,6 +1,6 @@
 /* ===== Board, snakes, ladders (drawn and animated every frame) ===== */
 const W=720,M=18,S=(W-2*M)/10;
-const BOX=Math.min(900,(window.innerWidth>window.innerHeight)?Math.min(window.innerHeight,window.innerWidth-320):window.innerWidth);
+const BOX=Math.min(900,(window.innerWidth>window.innerHeight)?Math.min(window.innerHeight-16,window.innerWidth-360):window.innerWidth-32);
 const VIEW=Math.round(Math.max(720,Math.min(1080,BOX*Math.min(window.devicePixelRatio||1,2.5)))/10)*10,ZIN=VIEW/360,ZOUT=VIEW/720,TK=192;
 const LADDERS={4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
 const SNAKES={16:6,47:26,49:11,62:19,87:24,93:73,95:75,98:78};
@@ -139,19 +139,18 @@ class BoardScene extends Phaser.Scene{
     }
   }
 
-  /* ----- camera ----- */
-  async look(t,dur){
-    const cam=this.cameras.main;cam.stopFollow();
-    const wv=cam.worldView,d=Math.hypot(t.c.x-wv.centerX,t.c.y-wv.centerY);
-    dur=dur||Math.min(900,260+d*1.4);
-    cam.pan(t.c.x,t.c.y,dur,'Sine.easeInOut',true);
-    await wait(dur+40);
+  /* ----- camera: the whole board stays in view; zoom in only for ladder climbs and snake bites ----- */
+  async focusIn(t,dur){
+    const cam=this.cameras.main;
     cam.startFollow(t.c,false,0.12,0.12);
+    cam.zoomTo(ZIN,dur,'Sine.easeInOut',true);
+    await wait(dur+40);
   }
-  setView(){
-    const cam=this.cameras.main,t=this.toks&&this.toks[G.cur];
-    cam.zoomTo(G.overview?ZOUT:ZIN,500);
-    if(!G.overview&&t)this.look(t,500);
+  async focusOut(dur){
+    const cam=this.cameras.main;
+    cam.zoomTo(ZOUT,dur,'Sine.easeInOut',true);
+    await wait(dur+40);
+    cam.stopFollow();cam.centerOn(W/2,W/2);
   }
   /* ----- effects ----- */
   burst(x,y,color,n,spd,life){
@@ -189,7 +188,7 @@ class BoardScene extends Phaser.Scene{
       const body=this.add.image(0,0,'tok'+p.i),base=46/TK;body.setScale(base);c.add([sh,aura,body]);
       return{c,sh,aura,body,p,base,busy:false};
     });
-    this.settle(true);const cam=this.cameras.main;cam.setZoom(G.overview?ZOUT:ZIN);cam.centerOn(this.toks[0].c.x,this.toks[0].c.y);
+    this.settle(true);const cam=this.cameras.main;cam.setZoom(ZOUT);cam.centerOn(W/2,W/2);
     this.loop(sid);
   }
   async settle(instant){
@@ -226,29 +225,29 @@ class BoardScene extends Phaser.Scene{
     this.ring(this.toks[p.i].c.x,this.toks[p.i].c.y,'#ffb703');
   }
   async takeTurn(p){
-    UI.turn(p);await this.look(this.toks[p.i]);
+    UI.turn(p);
     if(p.type==='human'){await UI.waitRoll();}
     else{await wait(700);if(p.dbl>0&&!p.armed&&Math.random()<0.5){this.armDouble(p);await wait(500);}await wait(300);}
     UI.lock();
     const v=(G.force&&G.force.length)?G.force.shift():1+Math.floor(Math.random()*6);
-    await this.rollDice(v);
+    await this.rollDice(v,p);
     await this.moveBy(p,v);
     if(G.over)return false;
     const dbl=p.armed,more=dbl||v===6;p.armed=false;this.again=dbl?'Dobel giliran!':'Dapat 6! Lempar lagi';UI.render();
     return more;
   }
-  async rollDice(v){
-    const d=this.dice,c=d.c,cam=this.cameras.main,u=VIEW/1080/cam.zoom,ds=2*u,V=VIEW/2,y0=V-290*u,yUp=y0-90*u;
+  async rollDice(v,pl){
+    const d=this.dice,c=d.c,cam=this.cameras.main,u=VIEW/1080/cam.zoom,ds=2*u,V=VIEW/2,y0=V-170*u,yUp=y0-80*u;
     c.setPosition(V,y0).setScale(0).setAlpha(1).setRotation(0).setVisible(true);
     d.sh.setPosition(V,y0+150*u).setVisible(true).setAlpha(0.1).setScale(ds*0.6);
-    this.drawDie(1+Math.floor(Math.random()*6));Sound.rattle(1.15);
+    this.drawDie(1+Math.floor(Math.random()*6));Sound.rattle(1.15);if(pl)UI.rollStart(pl);
     this.tweens.add({targets:c,scale:ds*1.2,duration:220,ease:'Back.easeOut'});
     this.tweens.add({targets:c,rotation:Math.PI*6*(Math.random()<0.5?1:-1),duration:1150,ease:'Cubic.easeOut'});
     this.tweens.add({targets:c,y:yUp,duration:380,ease:'Quad.easeOut'});
     this.tweens.add({targets:c,y:y0,duration:770,delay:380,ease:'Bounce.easeOut'});
     this.tweens.add({targets:d.sh,alpha:0.35,scale:ds,duration:700,delay:380});
     const iv=this.time.addEvent({delay:75,loop:true,callback:()=>this.drawDie(1+Math.floor(Math.random()*6))});
-    await wait(1150);iv.remove();c.setRotation(0);this.drawDie(v);Sound.land();
+    await wait(1150);iv.remove();c.setRotation(0);this.drawDie(v);Sound.land();if(pl)UI.rollEnd(pl,v);
     this.tweens.add({targets:c,scale:ds*1.45,duration:90,yoyo:true});
     this.cameras.main.shake(120,0.003);await wait(650);
     await Promise.all([tw({targets:c,scale:ds*0.5,alpha:0,duration:260,ease:'Back.easeIn'}),tw({targets:d.sh,alpha:0,duration:260})]);
@@ -275,7 +274,7 @@ class BoardScene extends Phaser.Scene{
     this.floatText(t.c.x,t.c.y-40,'+'+v,'#ffe58f');
     for(let i=0;i<path.length;i++){
       const c=cell(path[i]);Sound.step(i);
-      await this.hop(t,c.x,c.y);p.pos=path[i];this.passFx(path[i],i===path.length-1);
+      await this.hop(t,c.x,c.y);p.pos=path[i];UI.render();this.passFx(path[i],i===path.length-1);
     }
     if(LADDERS[p.pos])await this.climb(t,p);
     else if(SNAKES[p.pos])await this.bitten(t,p);
@@ -287,23 +286,23 @@ class BoardScene extends Phaser.Scene{
   }
   async climb(t,p){
     const L=this.lad.find(l=>l.a===p.pos),cnt=ladderRungs(L),dest=LADDERS[p.pos];
-    UI.toast('Naik tangga!','good');Sound.ladder(1.5,cnt);
+    UI.toast('Naik tangga!','good');await this.focusIn(t,550);Sound.ladder(1.5,cnt);
     this.tweens.add({targets:L,pulse:1,duration:300});
     const pr={u:0};
     await tw({targets:pr,u:1,duration:1500,ease:'Sine.easeInOut',onUpdate:()=>{
       const f=pr.u;t.c.setPosition(lerp(L.A.x,L.B.x,f),lerp(L.A.y,L.B.y,f));L.lit=f;
       t.body.y=-6-Math.abs(Math.sin(f*Math.PI*cnt))*9;
       if(Math.random()<0.25)this.burst(t.c.x,t.c.y+10,'#ffe58f',1,16,400);}});
-    t.body.y=0;p.pos=dest;this.burst(t.c.x,t.c.y,'#ffd166',16,50,600);this.ring(t.c.x,t.c.y,'#ffd166');
+    t.body.y=0;p.pos=dest;UI.render();this.burst(t.c.x,t.c.y,'#ffd166',16,50,600);this.ring(t.c.x,t.c.y,'#ffd166');
     await wait(400);
-    this.tweens.add({targets:L,lit:-1,pulse:0,duration:500});L.lit=-1;
+    this.tweens.add({targets:L,lit:-1,pulse:0,duration:500});L.lit=-1;await this.focusOut(650);
   }
   async bitten(t,p){
-    const sn=this.snk.find(s=>s.h===p.pos);sn.front=true;
+    const sn=this.snk.find(s=>s.h===p.pos);sn.front=true;await this.focusIn(t,500);
     Sound.hiss();await tw({targets:sn,excite:1,mouth:1,duration:380});
     if(p.ss>0){
       p.ss--;Sound.shield();UI.toast('Anti-Ular! Aman','power');this.ring(t.c.x,t.c.y,'#2ec4a6');this.burst(t.c.x,t.c.y,'#2ec4a6',16,50,600);
-      await wait(500);await tw({targets:sn,excite:0,mouth:0,duration:500});sn.front=false;UI.render();return;
+      await wait(500);await tw({targets:sn,excite:0,mouth:0,duration:500});sn.front=false;UI.render();await this.focusOut(600);return;
     }
     Sound.bite();UI.toast('Digigit ular!','bad');this.cameras.main.shake(280,0.009);
     t.body.setTint(0xff5555);this.burst(t.c.x,t.c.y,'#ff5d73',14,45,500);await wait(450);t.body.clearTint();
@@ -311,9 +310,9 @@ class BoardScene extends Phaser.Scene{
     await tw({targets:pr,u:1,duration:1400,ease:'Sine.easeIn',onUpdate:()=>{
       const pts=this.snakePts(sn,this.T),pp=pts[Math.min(pts.length-1,Math.floor(pr.u*(pts.length-1)))];
       t.c.setPosition(pp.x,pp.y);t.body.rotation=pr.u*12;t.body.setScale(t.base*(1-0.25*Math.sin(pr.u*Math.PI)));}});
-    t.body.rotation=0;t.body.setScale(t.base);p.pos=SNAKES[p.pos];
+    t.body.rotation=0;t.body.setScale(t.base);p.pos=SNAKES[p.pos];UI.render();
     this.dust(t.c.x,t.c.y+10);this.ring(t.c.x,t.c.y,'#ff5d73');
-    await tw({targets:sn,excite:0,mouth:0,duration:600});sn.front=false;
+    await tw({targets:sn,excite:0,mouth:0,duration:600});sn.front=false;await this.focusOut(650);
   }
   async combat(p,t){
     if(p.pos===1||p.pos===100)return;
@@ -328,9 +327,9 @@ class BoardScene extends Phaser.Scene{
       const to=Math.max(1,v.pos-10);
       UI.toast(v.name+' tertembak! -'+(v.pos-to),'bad');
       await tw({targets:vt.body,rotation:Math.PI*6,scale:0,duration:480,ease:'Cubic.easeIn'});
-      v.pos=to;const c=cell(to);vt.c.setPosition(c.x,c.y);vt.body.rotation=0;await this.look(vt,600);
+      v.pos=to;UI.render();const c=cell(to);vt.c.setPosition(c.x,c.y);vt.body.rotation=0;
       await tw({targets:vt.body,scale:vt.base,duration:320,ease:'Back.easeOut'});
-      this.burst(c.x,c.y,'#ffffff',12,40,500);await this.settle();await this.look(t,600);
+      this.burst(c.x,c.y,'#ffffff',12,40,500);await this.settle();
     }
   }
   async shoot(a,v){
@@ -349,7 +348,7 @@ class BoardScene extends Phaser.Scene{
     this.floatText(t.c.x,t.c.y-34,'+ '+PW[k],'#ffe58f');UI.toast(p.name+' dapat '+PW[k]+'!','power');UI.render();await wait(900);
   }
   async win(p){
-    G.over=true;const t=this.toks[p.i];Sound.fanfare();const cam=this.cameras.main;cam.stopFollow();cam.zoomTo(ZOUT,900);cam.pan(W/2,W/2,900,'Sine.easeInOut',true);UI.render();await wait(950);this.confetti();
+    G.over=true;const t=this.toks[p.i];Sound.fanfare();UI.render();this.confetti();
     UI.toast(p.name+' menang!','good');
     this.tweens.add({targets:t.body,y:-30,duration:300,yoyo:true,repeat:5});
     await wait(2200);UI.showWin(p);

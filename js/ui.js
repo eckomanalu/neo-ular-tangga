@@ -1,38 +1,51 @@
 
-/* ===== UI: tray, toasts, setup sheet, bootstrap ===== */
+/* ===== UI: player corner panels, toasts, setup sheet, bootstrap ===== */
 const $=s=>document.querySelector(s);
 let game=null,inGame=false,lastPlayers=null;
+const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;};
 const UI={
-  _roll:null,
+  _roll:null,_iv:null,_rolling:-1,
   render(){
-    const box=$('#players');box.textContent='';
-    G.players.forEach(p=>{
-      const d=document.createElement('div');d.className='chip'+(G.cur===p.i&&!G.over?' on':'');
-      const im=document.createElement('img');im.src=p.avUrl;im.alt='';
-      const w=document.createElement('div');w.className='who';
-      const nm=document.createElement('div');nm.className='nm';nm.textContent=p.name;
-      const sq=document.createElement('div');sq.className='sq';sq.textContent='Kotak '+p.pos+(p.type==='cpu'?' \u00b7 komputer':'');
-      const pl=document.createElement('div');pl.className='pills';
+    for(let i=0;i<4;i++){
+      const el=document.getElementById('pp'+i),p=G.players[i];
+      el.textContent='';
+      if(!p){el.className='pp empty';continue;}
+      const active=G.cur===i&&!G.over,mine=active&&p.type==='human'&&!!this._roll;
+      el.className='pp'+(active?' on':'');el.style.setProperty('--c',p.color);
+      const r1=mk('div','r1');r1.append(mk('span','nm',p.name),mk('span','sq','Kotak '+p.pos));
+      const r2=mk('div','r2');
+      const av=mk('img','av');av.src=p.avUrl;av.alt='';
+      const d=mk('button','dice');d.type='button';
+      const cv=document.createElement('canvas');cv.width=cv.height=120;drawDieFace(cv,p.last,mine);d.appendChild(cv);
+      if(mine){d.classList.add('ready');d.setAttribute('aria-label','Lempar dadu');d.addEventListener('click',()=>UI.tapRoll());}
+      else{d.disabled=true;d.tabIndex=-1;d.setAttribute('aria-label','Dadu '+p.name);}
+      if(this._rolling===i)d.classList.add('rolling');
+      r2.append(av,d);
+      const pl=mk('div','pills');
+      if(p.armed)pl.appendChild(mk('span','pill d on','Dobel aktif'));
       [['dbl','d','Dobel'],['ss','s','Anti-ular'],['ts','t','Anti-tembak']].forEach(([k,c,l])=>{
-        if(p[k]>0){const s=document.createElement('span');s.className='pill '+c;s.textContent=l+' '+p[k];pl.appendChild(s);}});
-      w.append(nm,sq,pl);d.append(im,w);box.appendChild(d);
-    });
-    this.btns();
-  },
-  btns(){
-    const p=G.players[G.cur],mine=!!(p&&p.type==='human'&&!G.over&&this._roll);
-    $('#btnRoll').disabled=!mine;
-    const b=$('#btnDbl');b.classList.toggle('armed',!!(p&&p.armed));
-    b.disabled=!(mine&&p.dbl>0&&!p.armed);
-    b.textContent=p&&p.armed?'Dobel aktif':'Dobel Giliran'+(p&&p.type==='human'&&p.dbl>0?' ×'+p.dbl:'');
+        if(p[k]<=0)return;
+        const use=k==='dbl'&&mine&&!p.armed;
+        const s=mk(use?'button':'span','pill '+c,l+' '+p[k]);
+        if(use){s.type='button';s.addEventListener('click',()=>G.scene.armDouble(p));}
+        pl.appendChild(s);
+      });
+      el.append(r1,r2);if(pl.childNodes.length)el.appendChild(pl);
+    }
   },
   status(t){$('#status').textContent=t;},
   turn(p){
     this.render();
-    this.status(p.type==='human'?p.name+', giliranmu. Lempar dadunya!':p.name+' sedang bermain...');
+    this.status(p.type==='human'?p.name+', giliranmu. Ketuk dadumu untuk melempar!':p.name+' sedang bermain...');
   },
-  waitRoll(){return new Promise(res=>{this._roll=res;this.btns();});},
-  lock(){this._roll=null;this.btns();},
+  waitRoll(){return new Promise(res=>{this._roll=res;this.render();});},
+  lock(){this._roll=null;this.render();},
+  tapRoll(){const r=this._roll;if(r){this._roll=null;Sound.click();this.render();r();}},
+  rollStart(p){
+    clearInterval(this._iv);this._rolling=p.i;this.render();
+    this._iv=setInterval(()=>{const c=document.querySelector('#pp'+p.i+' canvas');if(c)drawDieFace(c,1+Math.floor(Math.random()*6),false);},90);
+  },
+  rollEnd(p,v){clearInterval(this._iv);this._rolling=-1;p.last=v;this.render();},
   toast(msg,kind){
     const w=$('#stageWrap');w.querySelectorAll('.toast').forEach(e=>e.remove());
     const d=document.createElement('div');d.className='toast '+(kind||'');d.textContent=msg;w.appendChild(d);
@@ -44,10 +57,8 @@ const UI={
     $('#end').hidden=false;
   }
 };
-$('#btnRoll').addEventListener('click',()=>{const r=UI._roll;if(r){UI._roll=null;Sound.click();UI.btns();r();}});
-$('#btnDbl').addEventListener('click',()=>{if(UI._roll)G.scene.armDouble(G.players[G.cur]);});
 document.addEventListener('keydown',e=>{
-  if(e.code==='Space'&&$('#setup').hidden&&$('#end').hidden&&UI._roll&&document.activeElement.tagName!=='INPUT'){e.preventDefault();$('#btnRoll').click();}
+  if(e.code==='Space'&&$('#setup').hidden&&$('#end').hidden&&UI._roll&&document.activeElement.tagName!=='INPUT'){e.preventDefault();UI.tapRoll();}
 });
 
 /* sound toggles */
@@ -119,18 +130,19 @@ function openSetup(){
 }
 function startNew(players){
   Sound.init();syncSnd();
+  UI._roll=null;clearInterval(UI._iv);UI._rolling=-1;
   lastPlayers=players;inGame=true;$('#setup').hidden=true;$('#end').hidden=true;
   const sc=game.scene.getScene('board');game.scene.resume('board');sc.scene.restart({players});
 }
 $('#btnGo').addEventListener('click',()=>{
   if(!game)return;
+  $('#app').classList.toggle('flip',$('#optFlip').checked);
   startNew(cfg.slots.slice(0,cfg.n).map((s,i)=>({
     name:(s.name||'').trim()||(s.type==='cpu'?'Komputer '+i:'Pemain '+(i+1)),
     type:s.type,icon:s.icon,img:s.img,color:PCOL[i]})));
 });
 $('#btnResume').addEventListener('click',()=>{$('#setup').hidden=true;if(game)game.scene.resume('board');});
 $('#btnMenu').addEventListener('click',openSetup);
-$('#btnMap').addEventListener('click',()=>{G.overview=!G.overview;$('#btnMap').setAttribute('aria-pressed',String(G.overview));if(G.scene&&G.scene.toks&&G.scene.toks.length)G.scene.setView();});
 $('#btnAgain').addEventListener('click',()=>{if(lastPlayers)startNew(lastPlayers);});
 $('#btnToMenu').addEventListener('click',()=>{$('#end').hidden=true;inGame=false;openSetup();});
 

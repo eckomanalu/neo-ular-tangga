@@ -90,3 +90,16 @@ function cropPhoto(img){
   const cv=document.createElement('canvas');cv.width=cv.height=192;const c=cv.getContext('2d');
   const s=Math.min(img.width,img.height);c.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,192,192);return cv;
 }
+
+/* Dice face drawn inside a player's corner panel */
+function drawDieFace(cv,v,ready){
+  const c=cv.getContext('2d'),s=cv.width,k=s/100;
+  c.clearRect(0,0,s,s);c.save();c.scale(k,k);
+  const P={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],
+    5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]};
+  if(ready)c.globalAlpha=0.16;
+  (P[v]||[]).forEach(([x,y])=>{c.fillStyle=v===1?'#ff5d73':'#14233d';c.beginPath();c.arc(50+x*26,50+y*26,v===1?14:10,0,Math.PI*2);c.fill();});
+  c.globalAlpha=1;
+  if(ready){c.fillStyle='#14233d';c.font='800 21px Nunito,system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('LEMPAR',50,52);}
+  c.restore();
+}
