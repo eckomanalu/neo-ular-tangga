@@ -9,8 +9,14 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="app" class="flip">
-  <button class="fab" id="btnMenu" type="button" aria-label="Menu" aria-haspopup="dialog"><span></span><span></span><span></span></button>
+<div id="app">
+  <div id="bar">
+    <button class="fab" id="btnMenu" type="button" aria-label="Menu" aria-haspopup="dialog"><span></span><span></span><span></span></button>
+    <div class="pp empty" id="pp0"></div>
+    <div class="pp empty" id="pp1"></div>
+    <div class="pp empty" id="pp2"></div>
+    <div class="pp empty" id="pp3"></div>
+  </div>
   <div id="stageWrap">
     <div id="stage"></div>
     <div class="pop" id="menu" hidden>
@@ -18,16 +24,11 @@
         <h3 id="menuT">Menu</h3>
         <button class="tool" data-snd="music" aria-pressed="true">Musik</button>
         <button class="tool" data-snd="sfx" aria-pressed="true">Efek</button>
-        <label class="opt"><input type="checkbox" id="optFlip2" checked> Panel atas menghadap pemain di seberang</label>
         <button class="go" id="btnMenuResume" type="button">Lanjutkan</button>
         <button class="ghost" id="btnMenuNew" type="button">Permainan baru</button>
       </div>
     </div>
   </div>
-  <div class="pp empty" id="pp0"></div>
-  <div class="pp empty" id="pp1"></div>
-  <div class="pp empty" id="pp2"></div>
-  <div class="pp empty" id="pp3"></div>
   <p id="status" class="sr" aria-live="polite"></p>
 </div>
 
@@ -53,7 +54,6 @@
       <div class="rule t"><b>Anti-Tembak</b>Otomatis menahan satu tembakan lawan.</div>
     </div>
     <p class="lead">Mendarat tepat di kotak lawan menembaknya mundur 10 kotak. Lewat dari 100 membuat bidak memantul balik. Dapat angka 6 berarti melempar lagi, terus sampai bukan 6.</p>
-    <label class="opt"><input type="checkbox" id="optFlip" checked> Panel pemain atas menghadap pemain di seberang (layar portrait, untuk main bareng di satu HP)</label>
     <button class="go" id="btnGo">Mulai Main</button>
     <button class="ghost" id="btnResume" hidden>Lanjutkan permainan</button>
   </div>

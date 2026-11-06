@@ -3,9 +3,9 @@ const M=6,TK=192;
 let WW=720,WH=720,Sx=68.4,Sy=68.4,VW=720,VH=720,ZIN=2,ZOUT=1,AR=1;
 /* Board shape: tall tiles (ratio 0.7) in portrait, square in landscape. Re-run before each new game. */
 function setDims(){
-  const land=window.innerWidth>window.innerHeight;
-  AR=land?1:0.711;
-  const box=land?Math.min(window.innerHeight-16,window.innerWidth-360):Math.min(900,window.innerWidth-32);
+  const land=window.innerWidth>window.innerHeight,bh=Math.max(window.innerHeight/15,46);
+  AR=Math.max(0.4,Math.min(1.9,window.innerWidth/Math.max(100,window.innerHeight-bh)));
+  const box=Math.min(window.innerWidth,(window.innerHeight-bh)*AR);
   VW=Math.round(Math.max(720,Math.min(land?1080:960,box*Math.min(window.devicePixelRatio||1,2.5)))/10)*10;
   WW=720;WH=Math.round(WW/AR);VH=Math.round(VW/AR);
   Sx=(WW-2*M)/10;Sy=(WH-2*M)/10;ZOUT=VW/WW;ZIN=ZOUT*2;

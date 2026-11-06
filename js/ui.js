@@ -13,16 +13,15 @@ const UI={
       if(!p){el.className='pp empty';continue;}
       const active=G.cur===i&&!G.over,mine=active&&p.type==='human'&&!!this._roll;
       el.className='pp'+(active?' on':'');el.style.setProperty('--c',p.color);
-      const lab=mk('div','lab');lab.append(mk('span','nm',p.name),mk('span','sq','Kotak '+p.pos));
-      const wd=mk('div','wd');
-      const pin=mk('div','pin');pin.innerHTML=PIN_SVG;
-      const av=mk('img','av');av.src=p.avUrl;av.alt='';pin.appendChild(av);
+      const lab=mk('div','lab');const nm=mk('span','nm');nm.append(mk('i'),document.createTextNode('P'+(i+1)));
+      lab.appendChild(nm);el.title=p.name;
+      const wd=el;
+      const av=mk('img','av');av.src=p.avUrl;av.alt=p.name;
       const d=mk('button','dice');d.type='button';
       const cv=document.createElement('canvas');cv.width=cv.height=120;drawDieFace(cv,p.last,mine);d.appendChild(cv);
       if(mine){d.classList.add('ready');d.setAttribute('aria-label','Lempar dadu');d.addEventListener('click',()=>UI.tapRoll());}
       else{d.disabled=true;d.tabIndex=-1;d.setAttribute('aria-label','Dadu '+p.name);}
       if(this._rolling===i)d.classList.add('rolling');
-      wd.append(pin,d,mk('span','arr'));
       const pl=mk('div','pills');
       if(p.armed)pl.appendChild(mk('span','pill d on','Dobel aktif'));
       [['dbl','d','Dobel'],['ss','s','Anti-ular'],['ts','t','Anti-tembak']].forEach(([k,c,l])=>{
@@ -33,7 +32,7 @@ const UI={
         pl.appendChild(s);
       });
       if(pl.childNodes.length)lab.appendChild(pl);
-      el.append(lab,wd);
+      el.append(lab,d);
     }
   },
   status(t){$('#status').textContent=t;},
@@ -159,12 +158,6 @@ $('#btnMenuResume').addEventListener('click',()=>closeMenu(true));
 $('#menu').addEventListener('click',e=>{if(e.target.id==='menu')closeMenu(true);});
 $('#btnMenuNew').addEventListener('click',()=>{closeMenu(false);openSetup();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#menu').hidden)closeMenu(true);});
-function setFlip(v){
-  cfg.flip=v;$('#app').classList.toggle('flip',v);
-  ['#optFlip','#optFlip2'].forEach(s=>{$(s).checked=v;});
-}
-['#optFlip','#optFlip2'].forEach(s=>$(s).addEventListener('change',e=>setFlip(e.target.checked)));
-setFlip(true);
 $('#btnAgain').addEventListener('click',()=>{if(lastPlayers)startNew(lastPlayers);});
 $('#btnToMenu').addEventListener('click',()=>{$('#end').hidden=true;inGame=false;openSetup();});
 
