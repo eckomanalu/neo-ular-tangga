@@ -122,15 +122,16 @@ button.pill{cursor:pointer;box-shadow:0 0 0 1.5px #0006}
 @media (orientation:landscape){.card{max-width:920px}}
 
 /* Title screen and pop-ups */
-#title{background:linear-gradient(#bfe8a0 0,#6bbd6e 36%,#2b7a46 66%,#14402a 100%);display:grid;place-items:center;overflow:hidden}
+#title{background:linear-gradient(#bfe8a0 0,#6bbd6e 36%,#2b7a46 66%,#14402a 100%);display:grid;place-items:center;overflow:auto}
 .trees{position:absolute;left:0;right:0;bottom:0;width:100%;height:26%;pointer-events:none}
-.scene{width:100%;max-width:340px;height:auto;filter:drop-shadow(0 6px 0 #0b2a1a55)}
-.tcard{position:relative;z-index:1;width:min(100%,380px);display:flex;flex-direction:column;align-items:center;gap:22px}
+.scene{width:100%;max-width:min(100%,430px);border-radius:22px;height:auto;filter:drop-shadow(0 6px 0 #0b2a1a55)}
+.tcard{position:relative;z-index:1;width:min(100%,430px);display:flex;flex-direction:column;align-items:center;gap:12px}
 .logo{font-size:64px;line-height:1}
-.gname{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,12vw,64px);line-height:.95;text-align:center;color:#fff;text-shadow:0 4px 0 #0b2a1a;margin:0}
+.gname{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,10vw,54px);line-height:.95;text-align:center;color:#fff;text-shadow:0 4px 0 #0b2a1a;margin:0}
 .gname span{display:block;color:#d8ff7a}
-.tmenu{width:100%;display:flex;flex-direction:column;gap:12px}
-.tbtn{font-family:var(--f-display);font-size:24px;padding:13px;border-radius:16px;border:0;background:#f3ecd2;color:#1f5a34;cursor:pointer;box-shadow:0 5px 0 #b7a97a}
+.tmenu{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tbtn.start{grid-column:1/-1}
+.tbtn{font-family:var(--f-display);font-size:22px;padding:11px;border-radius:16px;border:0;background:#f3ecd2;color:#1f5a34;cursor:pointer;box-shadow:0 5px 0 #b7a97a}
 .tbtn.start{background:#3fb860;color:#fff;box-shadow:0 5px 0 #1f7a3a}
 .sheet.modal{z-index:60;background:rgba(6,14,28,.78);display:grid;place-items:center}
 .sheet.modal .card{width:min(100%,640px);max-height:100%;overflow:auto;margin:0;padding:18px;border-radius:20px;background:var(--bg2);border:2px solid var(--line)}
@@ -139,3 +140,7 @@ button.pill{cursor:pointer;box-shadow:0 0 0 1.5px #0006}
 .sheet.modal .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
 .sheet.modal .chips>*{flex:none}
 #setup .go{position:sticky;bottom:0;z-index:2}
+.fab svg{width:62%;height:62%}
+.fab.shuf{background:#e08a1e;box-shadow:0 3px 0 #9c5a0c}
+.fab.shuf[hidden]{display:none}
+.pp:not(.on) .nm{color:#fff;text-shadow:0 1px 2px #0008}

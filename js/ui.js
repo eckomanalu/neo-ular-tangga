@@ -31,6 +31,7 @@ const UI={
     drawDieFace(d.querySelector('canvas'),cur?cur.last:null,ready);
     d.disabled=!ready;d.classList.toggle('ready',ready);d.classList.toggle('rolling',this._rolling>=0);
     d.style.setProperty('--c',cur?cur.color:'#fff');
+    $('#btnShuffle').hidden=!(G.players.length&&inGame&&!G.rolled&&!G.over);
   },
   status(t){$('#status').textContent=t;},
   turn(p){
@@ -74,7 +75,7 @@ document.querySelectorAll('[data-snd]').forEach(b=>b.addEventListener('click',()
 }));
 
 /* setup sheet */
-const cfg={n:3,rand:false,slots:[
+const cfg={n:3,rand:false,diff:'medium',slots:[
   {name:'Pemain 1',type:'human',icon:'horse',img:null},
   {name:'Komputer 1',type:'cpu',icon:'cat',img:null},
   {name:'Komputer 2',type:'cpu',icon:'dog',img:null},
@@ -123,13 +124,17 @@ function openSetup(){
   if(running&&game)game.scene.pause('board');
   $('#setup').hidden=false;renderSetup();
 }
-function startNew(players){
+function startNew(players,forceRand){
   Sound.init();syncSnd();
   UI._roll=null;clearInterval(UI._iv);UI._rolling=-1;
   lastPlayers=players;inGame=true;$('#title').hidden=true;$('#setup').hidden=true;$('#end').hidden=true;
   setDims();game.scale.resize(VW,VH);requestAnimationFrame(()=>game.scale.refresh());
-  const sc=game.scene.getScene('board');game.scene.resume('board');sc.scene.restart({players,rand:cfg.rand});
+  const sc=game.scene.getScene('board');game.scene.resume('board');sc.scene.restart({players,rand:forceRand||cfg.rand,diff:cfg.diff});
+  if(forceRand)setTimeout(()=>UI.toast('Papan diacak!','power'),700);
 }
+const DIFFINFO={easy:'Easy: 9 tangga, 5 ular, 10 kotak power-up.',medium:'Medium: 7 tangga, 7 ular, 8 kotak power-up.',hard:'Hard: 5 tangga, 9 ular, 5 kotak power-up.'};
+$('#selDiff').addEventListener('change',e=>{cfg.diff=e.target.value;$('#diffInfo').textContent=DIFFINFO[cfg.diff];});
+$('#diffInfo').textContent=DIFFINFO.medium;
 $('#optRand').addEventListener('change',e=>{cfg.rand=e.target.checked;});
 $('#selN').addEventListener('change',e=>{cfg.n=+e.target.value;renderSetup();});
 $('#btnGo').addEventListener('click',()=>{
@@ -139,8 +144,14 @@ $('#btnGo').addEventListener('click',()=>{
     type:s.type,icon:s.icon,img:s.img,color:PCOL[i]})));
 });
 $('#btnResume').addEventListener('click',()=>{$('#setup').hidden=true;if(game&&inGame)game.scene.resume('board');});
+function shuffleBoard(){
+  if(G.rolled||!lastPlayers||!inGame)return;
+  if(!$('#menu').hidden)closeMenu(false);
+  Sound.click();startNew(lastPlayers,true);
+}
 function openMenu(){
   if(!$('#menu').hidden)return;
+  $('#btnMenuShuffle').hidden=!!G.rolled||G.over;
   UI.paused=true;if(game)game.scene.pause('board');
   $('#menu').hidden=false;$('#btnMenuResume').focus();
 }
@@ -149,6 +160,8 @@ function closeMenu(resume){
   if(resume&&game)game.scene.resume('board');
 }
 $('#btnMenu').addEventListener('click',openMenu);
+$('#btnShuffle').addEventListener('click',shuffleBoard);
+$('#btnMenuShuffle').addEventListener('click',shuffleBoard);
 $('#btnMenuResume').addEventListener('click',()=>closeMenu(true));
 $('#menu').addEventListener('click',e=>{if(e.target.id==='menu')closeMenu(true);});
 $('#btnMenuNew').addEventListener('click',()=>{closeMenu(false);openSetup();});
